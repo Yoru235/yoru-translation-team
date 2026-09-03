@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+:root {
+  --background: #faf3ff;
+  --foreground: #4b176d;
+}
+
+/* =========================
+   CẤU HÌNH CHUNG TOÀN WEBSITE
+   ========================= */
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  background: #faf3ff;
+  color: #4b176d;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Tất cả phần tử dùng box-sizing dễ kiểm soát */
+* {
+  box-sizing: border-box;
+}
+
+/* Nút và ô nhập liệu dùng cùng font với website */
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+/* =========================
+   THANH CUỘN
+   ========================= */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f8efff;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    to bottom,
+    #7c3aed,
+    #d13b91
+  );
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    to bottom,
+    #6d28d9,
+    #be267f
+  );
+}
+
+/* =========================
+   DARK MODE
+   ========================= */
+
+.dark {
+  --background: #160b20;
+  --foreground: #f8eaff;
+}
+
+.dark body {
+  background: #160b20;
+  color: #f8eaff;
+}

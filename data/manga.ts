@@ -1,0 +1,40 @@
+export const mangaList = [
+  {
+    id: 1,
+    title: "Solo Leveling",
+    cover: "/covers/solo.jpg",
+    author: "Chugong",
+    status: "Đang tiến hành",
+    chapters: 200,
+    views: 1250000,
+    description: "Một thợ săn yếu nhất trở thành người chơi mạnh mẽ nhất.",
+    genres: ["Action", "Fantasy", "Adventure"],
+    latestChapter: 200,
+  },
+
+  {
+    id: 2,
+    title: "Blue Lock",
+    cover: "/covers/bluelock.jpg",
+    author: "Muneyuki",
+    status: "Đang tiến hành",
+    chapters: 310,
+    views: 860000,
+    description: "Một dự án bóng đá đặc biệt nhằm tìm ra tiền đạo xuất sắc nhất.",
+    genres: ["Sports", "Action", "Drama"],
+    latestChapter: 310,
+  },
+
+  {
+    id: 3,
+    title: "Jinx",
+    cover: "/covers/jinx.jpg",
+    author: "Mingwa",
+    status: "Đang tiến hành",
+    chapters: 72,
+    views: 540000,
+    description: "Một bộ truyện thuộc thể loại Boylove.",
+    genres: ["Boylove", "Drama"],
+    latestChapter: 72,
+  },
+];

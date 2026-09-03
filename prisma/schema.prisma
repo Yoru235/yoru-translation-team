@@ -1,0 +1,238 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  username     String  @unique
+  passwordHash String
+  role         Role    @default(READER)
+  isActive     Boolean @default(true)
+
+  avatar String?
+
+  level       Int           @default(1)
+  points      Int           @default(0)
+  memberships GroupMember[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions       Session[]
+  comments       Comment[]
+  checkIns       UserCheckIn[]
+  bookmarks      Bookmark[]
+  ratings        Rating[]
+  readingHistory ReadingHistory[]
+}
+
+enum Role {
+  READER
+  EDITOR
+  ADMIN
+  OWNER
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model TranslationGroup {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members     GroupMember[]
+  avatar      String?
+  description String?
+  mangas      Manga[]
+}
+
+model GroupMember {
+  id        String    @id @default(cuid())
+  userId    String
+  groupId   String
+  role      GroupRole @default(MEMBER)
+  createdAt DateTime  @default(now())
+
+  user  User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group TranslationGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+  @@index([userId])
+  @@index([groupId])
+}
+
+enum GroupRole {
+  MEMBER
+  EDITOR
+  ADMIN
+  OWNER
+}
+
+model UserCheckIn {
+  id        String   @id @default(cuid())
+  userId    String
+  checkedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, checkedAt])
+  @@index([userId])
+  @@index([checkedAt])
+}
+
+model Manga {
+  id                 String            @id @default(cuid())
+  title              String
+  originalTitle      String?
+  author             String?
+  releaseDate        DateTime?
+  description        String?
+  type               String
+  status             String            @default("ongoing")
+  ageRestricted      Boolean           @default(false)
+  coverUrl           String?
+  creditUrl          String?
+  translationGroupId String?
+  translationGroup   TranslationGroup? @relation(fields: [translationGroupId], references: [id], onDelete: SetNull)
+  views              Int               @default(0)
+  rating             Float             @default(0)
+  isFeatured         Boolean           @default(false)
+  featuredOrder      Int               @default(0)
+  isLocked           Boolean           @default(false)
+  passwordHash       String?
+  passwordHint       String?
+  genres             String[]
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  chapters       Chapter[]
+  viewRecords    MangaView[]
+  comments       Comment[]
+  bookmarks      Bookmark[]
+  ratings        Rating[]
+  readingHistory ReadingHistory[]
+}
+
+model Chapter {
+  id           String   @id @default(cuid())
+  mangaId      String
+  volume       Int?
+  chapter      Float
+  createdAt    DateTime @default(now())
+  isLocked     Boolean  @default(false)
+  passwordHash String?
+  passwordHint String?
+
+  manga          Manga            @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+  images         ChapterImage[]
+  comments       Comment[]
+  readingHistory ReadingHistory[]
+
+  @@index([mangaId])
+}
+
+model ChapterImage {
+  id        String   @id @default(cuid())
+  chapterId String
+  imageUrl  String
+  fileName  String
+  order     Int
+  createdAt DateTime @default(now())
+
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@index([chapterId, order])
+}
+
+model MangaView {
+  id       String   @id @default(cuid())
+  mangaId  String
+  viewedAt DateTime @default(now())
+
+  manga Manga @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+
+  @@index([mangaId, viewedAt])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  mangaId   String?
+  chapterId String?
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  manga   Manga?   @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+  chapter Chapter? @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([mangaId])
+  @@index([chapterId])
+  @@index([createdAt])
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  mangaId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  manga Manga @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, mangaId])
+  @@index([userId])
+  @@index([mangaId])
+}
+
+model Rating {
+  id        String   @id @default(cuid())
+  mangaId   String
+  userId    String?
+  value     Int
+  createdAt DateTime @default(now())
+
+  manga Manga @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+  user  User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([mangaId])
+  @@index([userId])
+}
+
+model ReadingHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  mangaId   String
+  chapterId String
+  readAt    DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  manga   Manga   @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, chapterId])
+  @@index([userId, readAt])
+  @@index([mangaId])
+}
