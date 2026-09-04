@@ -23,6 +23,10 @@ type Chapter = {
   mangaId: string;
   volume: number | null;
   chapter: number;
+  chapterType: string;
+  content: string | null;
+  isH: boolean;
+  isEnd: boolean;
   isLocked: boolean;
   passwordHint: string | null;
   images: ChapterImage[];
@@ -39,6 +43,8 @@ type ChapterListItem = {
   id: string;
   chapter: number;
   volume: number | null;
+  isH: boolean;
+  isEnd: boolean;
 };
 
 type ChapterListResponse = {
@@ -515,11 +521,10 @@ setChapter((current) => {
           </h1>
 
           <p className="mt-2 text-lg font-semibold text-gray-400">
-            {chapter.volume !== null
-              ? `Vol. ${chapter.volume} — Chapter ${chapter.chapter}`
-              : `Chapter ${chapter.chapter}`}
-          </p>
-
+  {chapter.volume !== null
+    ? `Vol. ${chapter.volume} — Chapter ${chapter.chapter}${chapter.isH ? " - H" : ""}${chapter.isEnd ? " - END" : ""}`
+    : `Chapter ${chapter.chapter}${chapter.isH ? " - H" : ""}${chapter.isEnd ? " - END" : ""}`}
+</p>
         </div>
       </section>
 
@@ -564,56 +569,115 @@ setChapter((current) => {
         </div>
       </div>
 
-      {/* ẢNH CHAPTER */}
+            {/* NỘI DUNG CHAPTER */}
 
       <section className="bg-black">
         <div className="mx-auto max-w-5xl">
 
-          {chapter.images.length === 0 ? (
+          {/* NOVEL CÓ NỘI DUNG TEXT */}
+          {chapter.chapterType === "Novel" &&
+chapter.content ? (
+  <>
+    {/* NỘI DUNG NOVEL */}
+    <article
+      className="px-6 py-10 text-base leading-8 text-gray-200 sm:px-10 sm:text-lg"
+      onContextMenu={(event) =>
+        event.preventDefault()
+      }
+      onCopy={(event) =>
+        event.preventDefault()
+      }
+    >
+      <div className="whitespace-pre-wrap select-none">
+        {chapter.content}
+      </div>
+    </article>
+
+    {/* CRE CUỐI NOVEL */}
+    {chapter.images.length > 0 && (
+      <div
+        className="yoru-reader-images flex flex-col items-center select-none"
+        onContextMenu={(event) =>
+          event.preventDefault()
+        }
+        onDragStart={(event) =>
+          event.preventDefault()
+        }
+        onCopy={(event) =>
+          event.preventDefault()
+        }
+      >
+        {chapter.images.map((image) => (
+          <div
+            key={image.id}
+            className="relative w-full"
+          >
+            <img
+              src={image.imageUrl}
+              alt={`${chapter.manga.title} - Chapter ${chapter.chapter} - ${image.fileName}`}
+              className="block h-auto w-full select-none"
+              draggable={false}
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        ))}
+      </div>
+    )}
+  </>
+
+) : chapter.images.length === 0 ? (
+
+            /* CHAPTER KHÔNG CÓ NỘI DUNG */
             <div className="px-6 py-20 text-center">
               <div className="text-5xl">
-                🖼️
+                
               </div>
 
               <p className="mt-4 text-lg font-bold text-gray-300">
-                Chapter chưa có ảnh.
+                Chapter chưa có nội dung.
               </p>
             </div>
+
           ) : (
+
+            /* CHAPTER CÓ ẢNH */
             <div
-  className="yoru-reader-images flex flex-col items-center select-none"
-  onContextMenu={(event) => event.preventDefault()}
-  onDragStart={(event) => event.preventDefault()}
-  onCopy={(event) => event.preventDefault()}
->
-
+              className="yoru-reader-images flex flex-col items-center select-none"
+              onContextMenu={(event) =>
+                event.preventDefault()
+              }
+              onDragStart={(event) =>
+                event.preventDefault()
+              }
+              onCopy={(event) =>
+                event.preventDefault()
+              }
+            >
               {chapter.images.map((image) => (
-  <div
-    key={image.id}
-    className="relative w-full"
-  >
-   <img
-  src={image.imageUrl}
-  alt={`${chapter.manga.title} - Chapter ${chapter.chapter} - ${image.fileName}`}
-  className="block h-auto w-full select-none"
-  draggable={false}
-  loading={
-    image.order <= 2
-      ? "eager"
-      : "lazy"
-  }
-  decoding="async"
-/>
-
-  </div>
-))}
-
+                <div
+                  key={image.id}
+                  className="relative w-full"
+                >
+                  <img
+                    src={image.imageUrl}
+                    alt={`${chapter.manga.title} - Chapter ${chapter.chapter} - ${image.fileName}`}
+                    className="block h-auto w-full select-none"
+                    draggable={false}
+                    loading={
+                      image.order <= 2
+                        ? "eager"
+                        : "lazy"
+                    }
+                    decoding="async"
+                  />
+                </div>
+              ))}
             </div>
           )}
 
         </div>
       </section>
-
       {/* CUỐI CHAPTER */}
 
       <section className="border-t border-gray-900 bg-[#080808]">

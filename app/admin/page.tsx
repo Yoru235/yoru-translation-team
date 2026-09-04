@@ -176,9 +176,20 @@ export default function AdminPage() {
   CHAPTER
   ======================================================= */
 
-  const [selectedManga, setSelectedManga] = useState("");
-  const [volume, setVolume] = useState("");
-  const [chapter, setChapter] = useState("");
+const [selectedManga, setSelectedManga] = useState("");
+const [volume, setVolume] = useState("");
+const [chapter, setChapter] = useState("");
+
+const [chapterType, setChapterType] = useState<
+  "Manga" | "Manhwa" | "Manhua" | "Novel"
+>("Manga");
+
+const [novelContent, setNovelContent] = useState("");
+
+const [isH, setIsH] = useState(false);
+const [isEnd, setIsEnd] = useState(false);
+
+  
 
   /* =======================================================
   ZIP + ẢNH
@@ -1551,13 +1562,36 @@ const cancelEditTranslationGroup = () => {
       }
 
       if (
-        zipImages.length === 0
-      ) {
-        setMessage(
-          "❌ Chưa có ảnh để upload."
-        );
-        return;
-      }
+  chapterType === "Novel" &&
+  !novelContent.trim() &&
+  zipImages.length === 0
+) {
+  setMessage(
+    "❌ Novel cần có nội dung hoặc ít nhất một ảnh."
+  );
+  return;
+}
+
+if (
+  chapterType === "Novel" &&
+  !novelContent.trim() &&
+  zipImages.length === 0
+) {
+  setMessage(
+    "❌ Novel cần có nội dung hoặc ít nhất một ảnh."
+  );
+  return;
+}
+
+if (
+  chapterType !== "Novel" &&
+  zipImages.length === 0
+) {
+  setMessage(
+    "❌ Chưa có ảnh để upload."
+  );
+  return;
+}
 
       const selectedMangaData =
         mangaList.find(
@@ -1728,19 +1762,34 @@ const cancelEditTranslationGroup = () => {
               },
 
               body:
-                JSON.stringify({
-                  mangaId:
-                    selectedManga,
+  JSON.stringify({
+    mangaId:
+      selectedManga,
 
-                  volume:
-                    volumeNumber,
+    volume:
+      volumeNumber,
 
-                  chapter:
-                    chapterNumber,
+    chapter:
+      chapterNumber,
 
-                  images:
-                    uploadedImages,
-                }),
+    isH:
+      isH,
+
+    isEnd:
+      isEnd,
+
+    chapterType:
+      chapterType,
+
+     content:
+    chapterType === "Novel"
+      ? novelContent.trim() || null
+      : null,
+
+
+    images:
+      uploadedImages,
+  }),
             }
           );
 
@@ -1768,6 +1817,8 @@ const cancelEditTranslationGroup = () => {
         setVolume("");
         setChapter("");
         setZipFile(null);
+        setIsH(false);
+        setIsEnd(false);
 
         /* =====================================================
         XÓA PREVIEW CŨ
@@ -2584,7 +2635,43 @@ const cancelEditTranslationGroup = () => {
               )}
 
             </div>
+{/* LOẠI TRUYỆN */}
 
+<div className="mb-5">
+  <label className="mb-2 block font-bold text-purple-200">
+    📚 Loại truyện
+  </label>
+
+  <select
+    value={chapterType}
+    onChange={(event) =>
+      setChapterType(
+        event.target.value as
+          | "Manga"
+          | "Manhwa"
+          | "Manhua"
+          | "Novel"
+      )
+    }
+    className="w-full rounded-xl border border-purple-800 bg-[#18101f] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-pink-400"
+  >
+    <option value="Manga">
+      Manga
+    </option>
+
+    <option value="Manhwa">
+      Manhwa
+    </option>
+
+    <option value="Manhua">
+      Manhua
+    </option>
+
+    <option value="Novel">
+      Novel
+    </option>
+  </select>
+</div>
             {/* VOLUME */}
 
             <div className="mb-5">
@@ -2642,7 +2729,29 @@ const cancelEditTranslationGroup = () => {
               />
 
             </div>
+            {/* NỘI DUNG NOVEL */}
 
+{chapterType === "Novel" && (
+  <div className="mb-6">
+    <label className="mb-3 block font-bold text-purple-200">
+      📝 Nội dung chapter
+    </label>
+
+    <textarea
+      value={novelContent}
+      onChange={(event) =>
+        setNovelContent(event.target.value)
+      }
+      placeholder="Dán nội dung chapter..."
+      rows={18}
+      className="w-full resize-y rounded-2xl border border-purple-800 bg-[#18101f] px-5 py-4 text-white outline-none placeholder:text-purple-500 focus:ring-2 focus:ring-pink-400"
+    />
+
+    <p className="mt-2 text-xs text-purple-500">
+      Dán nội dung chapter Novel vào ô bên trên.
+    </p>
+  </div>
+)}
             {/* ZIP / ẢNH DROPZONE */}
 
             <div className="mb-6">
@@ -2934,6 +3043,65 @@ const cancelEditTranslationGroup = () => {
             )}
 
             {/* TÊN CHAPTER */}
+            {/* ĐÁNH DẤU CHAPTER */}
+
+<div className="mb-6 rounded-2xl border border-purple-800 bg-[#18101f] p-5">
+
+  <p className="mb-4 font-bold text-purple-200">
+    🏷️ Đánh dấu chapter
+  </p>
+
+  <div className="grid gap-3 sm:grid-cols-2">
+
+    <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-purple-800 bg-[#0f0a14] p-4 hover:bg-[#24152f]">
+
+      <input
+        type="checkbox"
+        checked={isH}
+        onChange={(event) =>
+          setIsH(event.target.checked)
+        }
+        className="h-5 w-5 accent-purple-700"
+      />
+
+      <div>
+        <p className="font-bold text-purple-200">
+          H
+        </p>
+
+        <p className="text-xs text-purple-500">
+          Đánh dấu chapter có nhãn H
+        </p>
+      </div>
+
+    </label>
+
+    <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-purple-800 bg-[#0f0a14] p-4 hover:bg-[#24152f]">
+
+      <input
+        type="checkbox"
+        checked={isEnd}
+        onChange={(event) =>
+          setIsEnd(event.target.checked)
+        }
+        className="h-5 w-5 accent-purple-700"
+      />
+
+      <div>
+        <p className="font-bold text-purple-200">
+          END
+        </p>
+
+        <p className="text-xs text-purple-500">
+          Đánh dấu chapter cuối của truyện
+        </p>
+      </div>
+
+    </label>
+
+  </div>
+
+</div>
 
             {chapter && (
 
@@ -2946,8 +3114,8 @@ const cancelEditTranslationGroup = () => {
                 <p className="mt-2 text-lg font-extrabold text-pink-400">
 
                   {volume
-                    ? `Vol. ${volume} — Chapter ${chapter}`
-                    : `Chapter ${chapter}`}
+  ? `Vol. ${volume} — Chapter ${chapter}${isH ? " - H" : ""}${isEnd ? " - END" : ""}`
+  : `Chapter ${chapter}${isH ? " - H" : ""}${isEnd ? " - END" : ""}`}
 
                 </p>
 
@@ -2974,32 +3142,43 @@ const cancelEditTranslationGroup = () => {
             {/* UPLOAD */}
 
             <button
-              type="button"
-              disabled={
-                isProcessingZip ||
-                zipImages.length ===
-                  0
-              }
-              onClick={
-                handleUploadChapter
-              }
-              className={
-                isProcessingZip ||
-                zipImages.length ===
-                  0
-                  ? "w-full cursor-not-allowed rounded-xl bg-[#2a2630] px-6 py-4 font-bold text-gray-500"
-                  : "w-full rounded-xl bg-gradient-to-r from-[#75257f] to-[#d13b91] px-6 py-4 font-bold text-white shadow-lg transition hover:scale-[1.01] hover:shadow-xl"
-              }
-            >
-
-              {isProcessingZip
-                ? "⏳ Đang xử lý file..."
-                : zipImages.length ===
-                    0
-                  ? "📦 Chưa có ảnh để Upload"
-                  : `⬆️ Upload Chapter — ${zipImages.length} ảnh`}
-
-            </button>
+  type="button"
+  disabled={
+    isProcessingZip ||
+    (
+      chapterType === "Novel" &&
+      !novelContent.trim() &&
+      zipImages.length === 0
+    ) ||
+    (
+      chapterType !== "Novel" &&
+      zipImages.length === 0
+    )
+  }
+  onClick={handleUploadChapter}
+  className={
+    isProcessingZip ||
+    (
+      chapterType === "Novel" &&
+      !novelContent.trim() &&
+      zipImages.length === 0
+    ) ||
+    (
+      chapterType !== "Novel" &&
+      zipImages.length === 0
+    )
+      ? "w-full cursor-not-allowed rounded-xl bg-[#2a2630] px-6 py-4 font-bold text-gray-500"
+      : "w-full rounded-xl bg-gradient-to-r from-[#75257f] to-[#d13b91] px-6 py-4 font-bold text-white shadow-lg transition hover:scale-[1.01] hover:shadow-xl"
+  }
+>
+  {isProcessingZip
+    ? "⏳ Đang xử lý file..."
+    : chapterType === "Novel"
+      ? "⬆️ Upload Chapter"
+      : zipImages.length === 0
+        ? "📦 Chưa có ảnh để Upload"
+        : `⬆️ Upload Chapter — ${zipImages.length} ảnh`}
+</button>
 
           </div>
 

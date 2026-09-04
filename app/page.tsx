@@ -10,7 +10,15 @@ type Manga = {
   title: string;
   originalTitle: string | null;
   description: string | null;
- translationGroup: string | null;
+ translationGroup:
+  | string
+  | {
+      id: string;
+      name: string;
+      slug: string;
+      avatar: string | null;
+    }
+  | null;
   type: string;
   status: string;
   ageRestricted: boolean;
@@ -197,7 +205,7 @@ useEffect(() => {
 
   void loadTranslationGroups();
 }, []);
- const filteredManga = mangaList.filter((manga) => {
+const filteredManga = mangaList.filter((manga) => {
   const keyword = search.trim().toLowerCase();
 
   // Lọc theo ô tìm kiếm
@@ -218,9 +226,8 @@ useEffect(() => {
       manga.status.toLowerCase() === "ongoing") ||
     (activeFilter === "completed" &&
       manga.status.toLowerCase() === "completed") ||
-    activeFilter === "group" &&
-manga.translationGroup !== null &&
-manga.translationGroup.trim() !== "";
+    (activeFilter === "group" &&
+      Boolean(manga.translationGroup));
 
   return matchesSearch && matchesFilter;
 });
@@ -712,54 +719,7 @@ const getBannerIndex = (offset: number) => {
     </div>
   )}
 </section>
-{translationGroups.length > 0 && (
-  <section className="mx-auto max-w-7xl px-6 py-8">
-    <div className="mb-5 flex items-center justify-between">
-      <h2 className="text-2xl font-bold text-gray-900">
-        Nhóm dịch
-      </h2>
-    </div>
 
-    <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-      {translationGroups.map((group) => (
-        <button
-          key={group.id}
-          type="button"
-          onClick={() =>
-            router.push(
-              `/translation-group/${group.slug}`,
-            )
-          }
-          className="group rounded-2xl border border-gray-200 bg-white p-5 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-        >
-          <div className="mx-auto h-20 w-20 overflow-hidden rounded-full bg-gray-100">
-            {group.avatar ? (
-              <img
-                src={group.avatar}
-                alt={group.name}
-                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-purple-600">
-                {group.name
-                  .charAt(0)
-                  .toUpperCase()}
-              </div>
-            )}
-          </div>
-
-          <h3 className="mt-4 line-clamp-2 font-bold text-gray-900 group-hover:text-purple-600">
-            {group.name}
-          </h3>
-
-          <p className="mt-1 text-sm text-gray-500">
-            {group._count?.mangas ?? 0} truyện
-          </p>
-        </button>
-      ))}
-    </div>
-  </section>
-)}
 {activeFilter === "all" ? (
   <>
     <MangaSection
@@ -792,7 +752,95 @@ const getBannerIndex = (offset: number) => {
       mangas={manhuaOnly}
     />
   </>
+) : activeFilter === "group" ? (
+  /* =====================================================
+     DANH SÁCH NHÓM DỊCH
+  ===================================================== */
+  <section className="mx-auto mt-12 max-w-7xl px-6">
+    <div className="mb-7">
+      <h2
+        className={
+          darkMode
+            ? "text-3xl font-extrabold text-pink-200"
+            : "text-3xl font-extrabold text-purple-900"
+        }
+      >
+        Nhóm dịch
+      </h2>
+
+      <div className="mt-3 h-1 w-20 rounded-full bg-gradient-to-r from-purple-600 to-pink-500" />
+    </div>
+
+    {translationGroups.length === 0 ? (
+      <div className="rounded-2xl border border-purple-100 bg-white p-10 text-center shadow-sm">
+        <p className="font-semibold text-purple-600">
+          Chưa có nhóm dịch nào.
+        </p>
+      </div>
+    ) : (
+      <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+        {translationGroups.map((group) => (
+          <button
+            key={group.id}
+            type="button"
+            onClick={() =>
+              router.push(
+                `/translation-group/${group.slug}`,
+              )
+            }
+            className={
+              darkMode
+                ? "group rounded-2xl border border-purple-900 bg-[#24152f] p-5 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                : "group rounded-2xl border border-purple-100 bg-white p-5 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+            }
+          >
+            {/* AVATAR NHÓM */}
+            <div className="mx-auto h-20 w-20 overflow-hidden rounded-full bg-purple-100">
+              {group.avatar ? (
+                <img
+                  src={group.avatar}
+                  alt={group.name}
+                  className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-purple-600">
+                  {group.name
+                    .charAt(0)
+                    .toUpperCase()}
+                </div>
+              )}
+            </div>
+
+            {/* TÊN NHÓM */}
+            <h3
+              className={
+                darkMode
+                  ? "mt-4 line-clamp-2 font-bold text-white group-hover:text-pink-300"
+                  : "mt-4 line-clamp-2 font-bold text-gray-900 group-hover:text-purple-600"
+              }
+            >
+              {group.name}
+            </h3>
+
+            {/* SỐ TRUYỆN */}
+            <p
+              className={
+                darkMode
+                  ? "mt-1 text-sm text-purple-300"
+                  : "mt-1 text-sm text-gray-500"
+              }
+            >
+              {group._count?.mangas ?? 0} truyện
+            </p>
+          </button>
+        ))}
+      </div>
+    )}
+  </section>
 ) : (
+  /* =====================================================
+     DANH SÁCH TRUYỆN THEO BỘ LỌC
+  ===================================================== */
   <section className="mx-auto mt-12 max-w-7xl px-6">
     <div className="mb-7">
       <h2
@@ -807,7 +855,6 @@ const getBannerIndex = (offset: number) => {
         {activeFilter === "manhua" && "Manhua"}
         {activeFilter === "ongoing" && "Đang tiến hành"}
         {activeFilter === "completed" && "Đã hoàn thành"}
-        {activeFilter === "group" && "Nhóm dịch"}
       </h2>
 
       <div className="mt-3 h-1 w-20 rounded-full bg-gradient-to-r from-purple-600 to-pink-500" />
@@ -823,11 +870,11 @@ const getBannerIndex = (offset: number) => {
       <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
         {filteredManga.map((manga) => (
           <MangaCard
-  key={manga.id}
-  id={manga.id}
-  title={manga.title}
-  coverUrl={manga.coverUrl}
-/>
+            key={manga.id}
+            id={manga.id}
+            title={manga.title}
+            coverUrl={manga.coverUrl}
+          />
         ))}
       </div>
     )}

@@ -137,6 +137,10 @@ model Chapter {
   mangaId      String
   volume       Int?
   chapter      Float
+  chapterType  String   @default("Manga")
+  content      String?
+  isH   Boolean @default(false)
+  isEnd Boolean @default(false)
   createdAt    DateTime @default(now())
   isLocked     Boolean  @default(false)
   passwordHash String?

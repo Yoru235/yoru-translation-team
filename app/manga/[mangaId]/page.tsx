@@ -298,10 +298,22 @@ if (manga.isLocked && !isMangaUnlocked) {
                 <div>
 
                   <p className="font-bold text-gray-200">
-                    {chapter.volume !== null
-                      ? `Vol. ${chapter.volume} — Chapter ${chapter.chapter}`
-                      : `Chapter ${chapter.chapter}`}
-                  </p>
+  {chapter.volume !== null
+    ? `Vol. ${chapter.volume} — Chapter ${chapter.chapter}`
+    : `Chapter ${chapter.chapter}`}
+
+  {chapter.isH && (
+    <span className="ml-2 text-purple-400">
+      - H
+    </span>
+  )}
+
+  {chapter.isEnd && (
+    <span className="ml-2 text-pink-400">
+      - END
+    </span>
+  )}
+</p>
 
                   <p className="mt-1 text-xs text-gray-500">
                     {chapter.images.length} trang

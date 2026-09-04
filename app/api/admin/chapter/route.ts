@@ -196,6 +196,10 @@ export async function POST(request: Request) {
       volume,
       chapter,
       images,
+      isH,
+      isEnd,
+      chapterType,
+      content,
     } = body;
 
     // ================================
@@ -247,16 +251,16 @@ export async function POST(request: Request) {
     // ================================
 
     if (
-      !Array.isArray(images) ||
-      images.length === 0
-    ) {
-      return NextResponse.json(
-        {
-          error: "Chapter chưa có ảnh.",
-        },
-        { status: 400 }
-      );
-    }
+  chapterType !== "Novel" &&
+  (!Array.isArray(images) || images.length === 0)
+) {
+  return NextResponse.json(
+    {
+      error: "Chapter chưa có ảnh.",
+    },
+    { status: 400 }
+  );
+}
 
     // ================================
     // KIỂM TRA TRUYỆN CÓ TỒN TẠI
@@ -377,7 +381,10 @@ export async function POST(request: Request) {
     // KIỂM TRA ẢNH HỢP LỆ
     // ================================
 
-    if (validImages.length === 0) {
+    if (
+  chapterType !== "Novel" &&
+  validImages.length === 0
+) {
       return NextResponse.json(
         {
           error: "Không có ảnh hợp lệ.",
@@ -385,6 +392,19 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    if (
+  chapterType === "Novel" &&
+  !content?.trim() &&
+  validImages.length === 0
+) {
+  return NextResponse.json(
+    {
+      error:
+        "Novel cần có nội dung hoặc ít nhất một ảnh.",
+    },
+    { status: 400 }
+  );
+}
 
     // ================================
     // SẮP XẾP ẢNH THEO ORDER
@@ -435,6 +455,20 @@ export async function POST(request: Request) {
           volume: volumeNumber,
 
           chapter: chapterNumber,
+          chapterType:
+  typeof chapterType === "string" &&
+  chapterType.trim()
+    ? chapterType.trim()
+    : "Manga",
+
+content:
+  chapterType === "Novel" &&
+  typeof content === "string" &&
+  content.trim()
+    ? content.trim()
+    : null,
+          isH: Boolean(isH),
+          isEnd: Boolean(isEnd),
 
           images: {
             create: validImages.map(
@@ -536,6 +570,8 @@ export async function PUT(request: Request) {
     const {
       chapter,
       volume,
+      isH,
+      isEnd,
     } = body;
 
     // ==========================================
@@ -629,6 +665,8 @@ export async function PUT(request: Request) {
         data: {
           chapter: chapterNumber,
           volume: volumeNumber,
+          isH: Boolean(isH),
+          isEnd: Boolean(isEnd),
         },
       });
 
