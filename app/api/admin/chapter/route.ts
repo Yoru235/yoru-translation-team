@@ -189,18 +189,27 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as {
+  mangaId?: string;
+  volume?: string | number | null;
+  chapter?: string | number | null;
+  images: unknown[];
+  isH?: boolean;
+  isEnd?: boolean;
+  chapterType?: string;
+  content?: string;
+};
 
-    const {
-      mangaId,
-      volume,
-      chapter,
-      images,
-      isH,
-      isEnd,
-      chapterType,
-      content,
-    } = body;
+const {
+  mangaId,
+  volume,
+  chapter,
+  images,
+  isH,
+  isEnd,
+  chapterType,
+  content,
+} = body;
 
     // ================================
     // KIỂM TRA TRUYỆN
@@ -565,14 +574,19 @@ export async function PUT(request: Request) {
     // ĐỌC DỮ LIỆU
     // ==========================================
 
-    const body = await request.json();
+    const body = (await request.json()) as {
+  chapter?: string | number | null;
+  volume?: string | number | null;
+  isH?: boolean;
+  isEnd?: boolean;
+};
 
-    const {
-      chapter,
-      volume,
-      isH,
-      isEnd,
-    } = body;
+const {
+  chapter,
+  volume,
+  isH,
+  isEnd,
+} = body;
 
     // ==========================================
     // KIỂM TRA CHAPTER

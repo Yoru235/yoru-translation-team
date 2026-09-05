@@ -213,13 +213,16 @@ await fetch("/api/history", {
           cache: "no-store",
         });
 
-        const data = await response.json();
+        const data = (await response.json()) as {
+  success?: boolean;
+  user?: unknown;
+};
 
-        setIsLoggedIn(
-          response.ok &&
-          data.success === true &&
-          !!data.user
-        );
+setIsLoggedIn(
+  response.ok &&
+  data.success === true &&
+  !!data.user
+);
       } catch (error) {
         console.error("CHECK LOGIN ERROR:", error);
         setIsLoggedIn(false);
@@ -382,14 +385,16 @@ if (chapter?.isLocked || chapter?.manga?.isLocked) {
 ),
     });
 
-    const data = await response.json();
+    const data = (await response.json()) as {
+  success?: boolean;
+  error?: string;
+};
 
-    if (!response.ok || !data.success) {
-      throw new Error(
-        data.error || "Mật khẩu không đúng."
-      );
-    }
-
+if (!response.ok || !data.success) {
+  throw new Error(
+    data.error || "Mật khẩu không đúng."
+  );
+}
 setIsUnlocked(true);
 
 setChapter((current) => {
