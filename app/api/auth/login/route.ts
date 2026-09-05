@@ -5,9 +5,12 @@ import { createSession } from "@/lib/auth/session";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as {
+  email?: string;
+  password?: string;
+};
 
-    const { email, password } = body;
+const { email, password } = body;
 
 if (!email || !password) {
       return NextResponse.json(
@@ -70,13 +73,16 @@ if (!email || !password) {
         role: user.role,
       },
     });
-  } catch (error) {
+    } catch (error) {
     console.error("LOGIN ERROR:", error);
 
     return NextResponse.json(
       {
         success: false,
-        error: "Không thể đăng nhập.",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Lỗi không xác định.",
       },
       { status: 500 }
     );
