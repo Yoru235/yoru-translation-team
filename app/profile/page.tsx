@@ -191,7 +191,7 @@ export default function ProfilePage() {
         cache: "no-store",
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       if (!response.ok || !data.success) {
         throw new Error(
@@ -244,7 +244,7 @@ formData.append("type", "avatar");
         body: formData,
       });
 
-      const uploadData = await uploadResponse.json();
+      const uploadData = (await uploadResponse.json()) as any;
 
       if (!uploadResponse.ok) {
         throw new Error(
@@ -275,7 +275,7 @@ formData.append("type", "avatar");
         }
       );
 
-      const avatarData = await avatarResponse.json();
+      const avatarData = (await avatarResponse.json()) as any;
 
       if (!avatarResponse.ok || !avatarData.success) {
         throw new Error(
@@ -321,7 +321,7 @@ formData.append("type", "avatar");
         method: "POST",
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       if (!response.ok || !data.success) {
         throw new Error(

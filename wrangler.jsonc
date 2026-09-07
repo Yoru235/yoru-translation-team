@@ -3,8 +3,9 @@
   "name": "yoru-translation-team",
   "compatibility_date": "2026-09-05",
   "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  "nodejs_compat",
+  "no_handle_cross_request_promise_resolution"
+],
   "main": "vinext/server/fetch-handler",
   "assets": {
     "directory": "dist/client",
@@ -12,18 +13,27 @@
     "binding": "ASSETS"
   },
   "cache": {
-  "enabled": true
-},
-"images": {
-  "binding": "IMAGES"
-},
+    "enabled": true
+  },
+  "images": {
+    "binding": "IMAGES"
+  },
   "version_metadata": {
     "binding": "CF_VERSION_METADATA"
   },
   "r2_buckets": [
+    {
+      "binding": "UPLOADS",
+      "bucket_name": "yoru-uploads",
+      "remote": true
+    }
+  ],
+  "d1_databases": [
   {
-    "binding": "UPLOADS",
-    "bucket_name": "yoru-uploads"
+    "binding": "yoru_database",
+    "database_name": "yoru-database",
+    "database_id": "63377740-41f3-44e6-a9ef-86d21ec32a01",
+    "remote": true
   }
 ]
 }

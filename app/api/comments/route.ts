@@ -121,7 +121,7 @@ export async function POST(request: Request) {
     }
 
     const body =
-      await request.json();
+  (await request.json()) as any;
 
     const content =
       typeof body.content === "string"

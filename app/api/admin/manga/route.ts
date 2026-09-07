@@ -150,7 +150,14 @@ translationGroup: {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    console.log("===== CREATE MANGA START =====");
+
+    console.log("READING REQUEST BODY...");
+
+    const body =
+      (await request.json()) as Record<string, unknown>;
+
+    console.log("REQUEST BODY READ SUCCESS");
 
     /* =========================
        KIỂM TRA TÊN TRUYỆN
@@ -235,23 +242,41 @@ export async function POST(request: Request) {
        TẠO TRUYỆN
     ========================= */
 
-    const manga = await prisma.manga.create({
-      data: {
-        title,
-        originalTitle,
-        author,
-        releaseDate,
-        description,
-        type,
-        status,
-        ageRestricted,
-translationGroupId,
-genres,
-        coverUrl,
-        creditUrl,
-      },
-    });
+    console.log(
+  "CREATING MANGA...",
+  {
+    title,
+    type,
+    status,
+    translationGroupId,
+    genres,
+    coverUrl,
+    creditUrl,
+  }
+);
 
+const manga =
+  await prisma.manga.create({
+    data: {
+      title,
+      originalTitle,
+      author,
+      releaseDate,
+      description,
+      type,
+      status,
+      ageRestricted,
+      translationGroupId,
+      genres,
+      coverUrl,
+      creditUrl,
+    },
+  });
+
+console.log(
+  "MANGA CREATED SUCCESS:",
+  manga.id
+);
     return NextResponse.json(
       {
         success: true,
@@ -288,7 +313,7 @@ genres,
 
 export async function PUT(request: Request) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as Record<string, unknown>;
 
     const id = body?.id;
 
@@ -387,7 +412,7 @@ export async function PUT(request: Request) {
               ? body.coverUrl.trim() || null
               : manga.coverUrl,
 
-          creditUrl:
+                    creditUrl:
             typeof body.creditUrl === "string"
               ? body.creditUrl.trim() || null
               : manga.creditUrl,
@@ -395,10 +420,15 @@ export async function PUT(request: Request) {
           genres:
             Array.isArray(body.genres)
               ? body.genres.filter(
-                  (genre: unknown) =>
+                  (genre: unknown): genre is string =>
                     typeof genre === "string"
                 )
-              : manga.genres,
+              : Array.isArray(manga.genres)
+                ? manga.genres.filter(
+                    (genre): genre is string =>
+                      typeof genre === "string"
+                  )
+                : [],
         },
       });
 
@@ -437,7 +467,7 @@ export async function DELETE(request: Request) {
     let body: { id?: unknown } = {};
 
     try {
-      body = await request.json();
+      body = (await request.json()) as any;
     } catch {
       // Không có body thì lấy ID từ query
     }
@@ -502,15 +532,11 @@ export async function DELETE(request: Request) {
        XÓA TRUYỆN
     ========================= */
 
-    await prisma.$transaction(
-      async (tx) => {
-        await tx.manga.delete({
-          where: {
-            id,
-          },
-        });
-      }
-    );
+    await prisma.manga.delete({
+  where: {
+    id,
+  },
+});
 
     return NextResponse.json({
       success: true,

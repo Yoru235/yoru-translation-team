@@ -5,8 +5,8 @@ const ALLOWED_PREFIXES = [
   "covers/",
   "credits/",
   "avatars/",
+  "chapters/",
 ];
-
 function isAllowedKey(key: string) {
   if (
     key.includes("..") ||

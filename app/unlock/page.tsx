@@ -30,7 +30,7 @@ export default function UnlockPage() {
         body: JSON.stringify({ password }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       if (!response.ok || !data.success) {
         setError(data.error || "Mật khẩu không đúng.");

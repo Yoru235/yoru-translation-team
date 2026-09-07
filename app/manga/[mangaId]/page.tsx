@@ -201,23 +201,25 @@ if (manga.isLocked && !isMangaUnlocked) {
 </div>
 
 </div>
-              <div className="mt-5 flex flex-wrap gap-2">
+             <div className="mt-5 flex flex-wrap gap-2">
 
-                <span className="rounded-full bg-purple-900/50 px-3 py-1 text-sm text-purple-200">
-                  {manga.status}
-                </span>
+  <span className="rounded-full bg-purple-900/50 px-3 py-1 text-sm text-purple-200">
+    {manga.status}
+  </span>
 
-                {manga.genres.map((genre) => (
-                  <span
-                    key={genre}
-                    className="rounded-full bg-[#171717] px-3 py-1 text-sm text-gray-300"
-                  >
-                    {genre}
-                  </span>
-                ))}
+  {Array.isArray(manga.genres) &&
+    manga.genres.map((genre: unknown, index: number) => (
+      <span
+        key={index}
+        className="rounded-full bg-[#171717] px-3 py-1 text-sm text-gray-300"
+      >
+        {typeof genre === "string"
+          ? genre
+          : ""}
+      </span>
+    ))}
 
-              </div>
-
+</div>
               {manga.description && (
                 <p className="mt-6 whitespace-pre-line leading-7 text-gray-300">
                   {manga.description}

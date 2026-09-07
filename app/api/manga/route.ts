@@ -110,7 +110,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as any;
 
     const title =
       typeof body.title === "string"
@@ -228,7 +228,7 @@ const manga = await prisma.manga.create({
 
 export async function PUT(request: Request) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as any;
 
     const id = body?.id;
 

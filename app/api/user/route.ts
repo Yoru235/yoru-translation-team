@@ -11,7 +11,7 @@ function getLevelFromPoints(points: number) {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as any;
 
     const userId = body?.userId;
 

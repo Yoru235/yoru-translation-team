@@ -70,7 +70,7 @@ export default function Comments({
         );
 
       const data =
-        await response.json();
+  (await response.json()) as any;
 
       if (
         !response.ok ||
@@ -136,7 +136,7 @@ export default function Comments({
         });
 
       const data =
-        await response.json();
+  (await response.json()) as any;
 
       if (
         !response.ok ||

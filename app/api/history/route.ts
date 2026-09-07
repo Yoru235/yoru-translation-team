@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as any;
 
     const chapterId = String(body.chapterId || "").trim();
 

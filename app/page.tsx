@@ -52,7 +52,7 @@ export default function Home() {
       method: "POST",
     });
 
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
     if (!response.ok || !data.success) {
       throw new Error(
@@ -163,7 +163,7 @@ const [isFeaturedPaused, setIsFeaturedPaused] = useState(false);
         cache: "no-store",
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       if (response.ok && data.success && data.user) {
   setIsLoggedIn(true);
@@ -190,7 +190,7 @@ useEffect(() => {
         },
       );
 
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       if (data.success && Array.isArray(data.groups)) {
         setTranslationGroups(data.groups);
@@ -464,7 +464,7 @@ const getBannerIndex = (offset: number) => {
                   }
                 );
 
-                const data = await response.json();
+                const data = (await response.json()) as any;
 
                 if (!response.ok || !data.success) {
                   throw new Error(

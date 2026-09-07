@@ -67,7 +67,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as any;
     const mangaId = String(body.mangaId || "").trim();
 
     if (!mangaId) {
@@ -158,7 +158,7 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as any;
     const mangaId = String(body.mangaId || "").trim();
 
     if (!mangaId) {

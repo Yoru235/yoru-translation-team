@@ -6,7 +6,7 @@ import {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as any;
 
     const password = String(body.password ?? "");
     const correctPassword = process.env.SITE_PASSWORD;

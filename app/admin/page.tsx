@@ -188,6 +188,22 @@ const [novelContent, setNovelContent] = useState("");
 
 const [isH, setIsH] = useState(false);
 const [isEnd, setIsEnd] = useState(false);
+const [isWatermarkEnabled, setIsWatermarkEnabled] =
+  useState(false);
+
+const [watermarkType, setWatermarkType] =
+  useState<"text" | "image">("text");
+
+const [watermarkText, setWatermarkText] =
+  useState(
+    "YORUTEAM.COM ĐỂ ỦNG HỘ NHÓM DỊCH"
+  );
+
+const [watermarkImage, setWatermarkImage] =
+  useState<File | null>(null);
+
+const [watermarkImagePreview, setWatermarkImagePreview] =
+  useState("");
 
   
 
@@ -361,7 +377,7 @@ const [isSavingGroup, setIsSavingGroup] = useState(false);
         }
 
         const data =
-          await response.json();
+  (await response.json()) as any;
 
         if (
           !data.success ||
@@ -416,7 +432,7 @@ const [isSavingGroup, setIsSavingGroup] = useState(false);
         throw new Error("Không thể tải danh sách nhóm dịch.");
       }
 
-      const data = await response.json();
+      const data: any = await response.json();
 
       if (!data.success || !Array.isArray(data.groups)) {
         throw new Error("Dữ liệu nhóm dịch không hợp lệ.");
@@ -878,52 +894,161 @@ const [isSavingGroup, setIsSavingGroup] = useState(false);
   ========================================================= */
 
   const uploadSingleImage = async (
-    file: File
-  ) => {
-    const formData =
-      new FormData();
+  file: File
+) => {
+ const formData =
+  new FormData();
 
+formData.append(
+  "file",
+  file
+);
+
+formData.append(
+  "type",
+  "chapter"
+);
+
+/* =====================================
+   WATERMARK
+===================================== */
+
+formData.append(
+  "watermarkEnabled",
+  String(isWatermarkEnabled)
+);
+
+if (
+  isWatermarkEnabled &&
+  watermarkType === "text"
+) {
+  formData.append(
+    "watermarkType",
+    "text"
+  );
+
+  formData.append(
+    "watermarkText",
+    watermarkText.trim()
+  );
+}
+
+if (
+  isWatermarkEnabled &&
+  watermarkType === "image" &&
+  watermarkImage
+) {
+  formData.append(
+    "watermarkType",
+    "image"
+  );
+
+  formData.append(
+    "watermarkImage",
+    watermarkImage
+  );
+}
+  formData.append(
+  "watermarkEnabled",
+  String(isWatermarkEnabled)
+);
+
+if (
+  isWatermarkEnabled &&
+  watermarkType === "text"
+) {
+  formData.append(
+    "watermarkType",
+    "text"
+  );
+
+  formData.append(
+    "watermarkText",
+    watermarkText.trim()
+  );
+}
+
+if (
+  isWatermarkEnabled &&
+  watermarkType === "image" &&
+  watermarkImage
+) {
+  formData.append(
+    "watermarkType",
+    "image"
+  );
+
+  formData.append(
+    "watermarkImage",
+    watermarkImage
+  );
+}
+
+  /* =====================================
+     WATERMARK
+  ===================================== */
+
+  formData.append(
+    "watermarkEnabled",
+    String(isWatermarkEnabled)
+  );
+
+  if (
+    isWatermarkEnabled &&
+    watermarkType === "text"
+  ) {
     formData.append(
-      "file",
-      file
+      "watermarkType",
+      "text"
     );
 
-    const response =
-      await fetch(
-        "/api/upload",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+    formData.append(
+      "watermarkText",
+      watermarkText.trim()
+    );
+  }
 
-    const data =
-      await response.json();
+  if (
+    isWatermarkEnabled &&
+    watermarkType === "image" &&
+    watermarkImage
+  ) {
+    formData.append(
+      "watermarkType",
+      "image"
+    );
 
-    if (
-      !response.ok ||
-      !data.success
-    ) {
-      throw new Error(
-        data.error ||
-          `Không thể upload ảnh ${file.name}.`
-      );
-    }
+    formData.append(
+      "watermarkImage",
+      watermarkImage
+    );
+  }
 
-    const uploadedImage =
-      data.images?.[0];
+  const response =
+    await fetch(
+      "/api/upload",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
 
-    if (
-      !uploadedImage?.imageUrl
-    ) {
-      throw new Error(
-        `API không trả về URL ảnh ${file.name}.`
-      );
-    }
+  const data =
+    (await response.json()) as any;
 
-    return uploadedImage.imageUrl as string;
-  };
+  if (
+    !response.ok ||
+    !data.success
+  ) {
+    throw new Error(
+      data.error ||
+        "Không thể upload ảnh."
+    );
+  }
 
+  return data.images?.[0] ||
+    data;
+};
   /* =========================================================
   TẠO TRUYỆN
   ========================================================= */
@@ -978,8 +1103,7 @@ const [isSavingGroup, setIsSavingGroup] = useState(false);
             }
           );
 
-        const coverData =
-          await coverResponse.json();
+        const coverData: any = await coverResponse.json();
 
         if (
           !coverResponse.ok ||
@@ -1031,8 +1155,7 @@ const [isSavingGroup, setIsSavingGroup] = useState(false);
               }
             );
 
-          const creditData =
-            await creditResponse.json();
+          const creditData: any = await creditResponse.json();
 
           if (
             !creditResponse.ok ||
@@ -1104,7 +1227,7 @@ const [isSavingGroup, setIsSavingGroup] = useState(false);
           );
 
         const data =
-          await response.json();
+  (await response.json()) as any;
 
         if (
           !response.ok ||
@@ -1275,7 +1398,7 @@ if (groupAvatarFile) {
     });
 
   const uploadData =
-    await uploadResponse.json();
+  (await uploadResponse.json()) as any;
 
   if (
     !uploadResponse.ok ||
@@ -1311,7 +1434,7 @@ if (groupAvatarFile) {
 }),
     });
 
-    const data = await response.json();
+    const data: any = await response.json();
 
     if (!response.ok || !data.success) {
       throw new Error(
@@ -1374,7 +1497,7 @@ const handleDeleteTranslationGroup = async (
       }
     );
 
-    const data = await response.json();
+    const data: any = await response.json();
 
     if (!response.ok || !data.success) {
       throw new Error(
@@ -1429,7 +1552,7 @@ const handleEditTranslationGroup = async () => {
       }),
     });
 
-    const data = await response.json();
+    const data: any = await response.json();
 
     if (!response.ok || !data.success) {
       throw new Error(
@@ -1676,14 +1799,17 @@ if (
               );
           }
 
-          const formData =
-            new FormData();
+          const formData = new FormData();
 
-          formData.append(
-            "file",
-            file
-          );
+formData.append(
+  "file",
+  file
+);
 
+formData.append(
+  "type",
+  "chapter"
+);
           const uploadResponse =
             await fetch(
               "/api/upload",
@@ -1695,19 +1821,35 @@ if (
               }
             );
 
-          const uploadData =
-            await uploadResponse.json();
+          const responseText =
+  await uploadResponse.text();
 
-          if (
-            !uploadResponse.ok ||
-            !uploadData.success
-          ) {
-            throw new Error(
-              uploadData.error ||
-                `Không thể upload ảnh ${image.name}.`
-            );
-          }
+let uploadData: any = null;
 
+try {
+  uploadData =
+    responseText
+      ? JSON.parse(responseText)
+      : null;
+} catch {
+  throw new Error(
+    `Server trả về dữ liệu không hợp lệ khi upload ảnh ${image.name}.`
+  );
+}
+
+if (!uploadResponse.ok) {
+  throw new Error(
+    uploadData?.error ||
+      `Upload ảnh ${image.name} thất bại. HTTP ${uploadResponse.status}.`
+  );
+}
+
+if (!uploadData?.success) {
+  throw new Error(
+    uploadData?.error ||
+      `API không trả về kết quả upload hợp lệ cho ảnh ${image.name}.`
+  );
+}
           const uploadedImage =
             uploadData.images?.[0];
 
@@ -1793,18 +1935,51 @@ if (
             }
           );
 
-        const data =
-          await response.json();
+        const responseText =
+  await response.text();
 
-        if (
-          !response.ok ||
-          !data.success
-        ) {
-          throw new Error(
-            data.error ||
-              "Không thể tạo chapter."
-          );
-        }
+let data: any = null;
+
+try {
+  data =
+    responseText
+      ? JSON.parse(responseText)
+      : null;
+} catch {
+  console.error(
+    "CREATE CHAPTER RESPONSE:",
+    responseText
+  );
+
+  throw new Error(
+    `Server trả về dữ liệu không hợp lệ khi tạo chapter. HTTP ${response.status}.`
+  );
+}
+
+if (!response.ok) {
+  console.error(
+    "CREATE CHAPTER ERROR:",
+    response.status,
+    responseText
+  );
+
+  throw new Error(
+    data?.error ||
+      `Không thể tạo chapter. HTTP ${response.status}.`
+  );
+}
+
+if (!data?.success) {
+  console.error(
+    "CREATE CHAPTER INVALID RESPONSE:",
+    data
+  );
+
+  throw new Error(
+    data?.error ||
+      "API không trả về kết quả tạo chapter hợp lệ."
+  );
+}
 
         /* =====================================================
         THÀNH CÔNG
@@ -1819,6 +1994,23 @@ if (
         setZipFile(null);
         setIsH(false);
         setIsEnd(false);
+        setIsWatermarkEnabled(false);
+
+setWatermarkType("text");
+
+setWatermarkText(
+  "YORUTEAM.COM ĐỂ ỦNG HỘ NHÓM DỊCH"
+);
+
+setWatermarkImage(null);
+
+if (watermarkImagePreview) {
+  URL.revokeObjectURL(
+    watermarkImagePreview
+  );
+}
+
+setWatermarkImagePreview("");
 
         /* =====================================================
         XÓA PREVIEW CŨ
@@ -2750,6 +2942,159 @@ if (
     <p className="mt-2 text-xs text-purple-500">
       Dán nội dung chapter Novel vào ô bên trên.
     </p>
+  </div>
+)}
+{/* WATERMARK */}
+
+{chapterType !== "Novel" && (
+  <div className="mb-6 rounded-2xl border border-purple-800 bg-[#120c18] p-5">
+
+    <label className="flex cursor-pointer items-center gap-3 font-bold text-purple-200">
+
+      <input
+        type="checkbox"
+        checked={isWatermarkEnabled}
+        onChange={(event) =>
+          setIsWatermarkEnabled(
+            event.target.checked
+          )
+        }
+        className="h-5 w-5"
+      />
+
+      💧 Thêm Watermark cho Chapter
+
+    </label>
+
+    {isWatermarkEnabled && (
+
+      <div className="mt-5">
+
+        <p className="mb-3 font-semibold text-purple-300">
+          Loại Watermark
+        </p>
+
+        <div className="mb-5 flex gap-3">
+
+          <button
+            type="button"
+            onClick={() =>
+              setWatermarkType("text")
+            }
+            className={
+              watermarkType === "text"
+                ? "rounded-xl bg-purple-600 px-5 py-3 font-bold text-white"
+                : "rounded-xl border border-purple-800 px-5 py-3 font-semibold text-purple-300"
+            }
+          >
+            📝 Chữ
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              setWatermarkType("image")
+            }
+            className={
+              watermarkType === "image"
+                ? "rounded-xl bg-purple-600 px-5 py-3 font-bold text-white"
+                : "rounded-xl border border-purple-800 px-5 py-3 font-semibold text-purple-300"
+            }
+          >
+            🖼️ Ảnh
+          </button>
+
+        </div>
+
+        {watermarkType === "text" && (
+
+          <div>
+
+            <label className="mb-2 block font-semibold text-purple-200">
+              Nội dung Watermark
+            </label>
+
+            <textarea
+              value={watermarkText}
+              onChange={(event) =>
+                setWatermarkText(
+                  event.target.value
+                )
+              }
+              rows={3}
+              placeholder="Nhập chữ watermark..."
+              className="w-full resize-y rounded-xl border border-purple-800 bg-[#18101f] px-4 py-3 text-white outline-none placeholder:text-purple-500 focus:ring-2 focus:ring-pink-400"
+            />
+
+          </div>
+
+        )}
+
+        {watermarkType === "image" && (
+
+          <div>
+
+            <label className="mb-2 block font-semibold text-purple-200">
+              Chọn ảnh Watermark
+            </label>
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(event) => {
+
+                const file =
+                  event.target.files?.[0];
+
+                if (!file) return;
+
+                if (
+                  watermarkImagePreview
+                ) {
+                  URL.revokeObjectURL(
+                    watermarkImagePreview
+                  );
+                }
+
+                setWatermarkImage(
+                  file
+                );
+
+                setWatermarkImagePreview(
+                  URL.createObjectURL(
+                    file
+                  )
+                );
+              }}
+              className="block w-full text-sm text-purple-300"
+            />
+
+            {watermarkImagePreview && (
+
+              <div className="mt-4">
+
+                <p className="mb-2 text-sm text-purple-400">
+                  Preview Watermark
+                </p>
+
+                <img
+                  src={watermarkImagePreview}
+                  alt="Preview Watermark"
+                  className="max-h-40 rounded-xl border border-purple-800"
+                />
+
+              </div>
+
+            )}
+
+          </div>
+
+        )}
+
+      </div>
+
+    )}
+
   </div>
 )}
             {/* ZIP / ẢNH DROPZONE */}

@@ -18,7 +18,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "sharp": path.resolve(__dirname, "empty-stub.js"),
+      "sharp": path.resolve(import.meta.dirname, "empty-stub.js"),
     },
   },
 });

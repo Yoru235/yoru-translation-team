@@ -47,7 +47,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as any;
 
     const name = String(body.name ?? "").trim();
     const avatar = body.avatar
@@ -119,7 +119,7 @@ export async function POST(request: Request) {
 }
 export async function PUT(request: Request) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as any;
 
     const id = String(body.id ?? "").trim();
     const name = String(body.name ?? "").trim();
@@ -240,7 +240,7 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as any;
 
     const id = String(body.id ?? "").trim();
 

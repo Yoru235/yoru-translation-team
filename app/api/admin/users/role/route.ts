@@ -41,7 +41,7 @@ export async function PUT(request: Request) {
     // ĐỌC DỮ LIỆU
     // ==============================
 
-    const body = await request.json();
+    const body = (await request.json()) as any;
 
     const { email, role } = body;
 

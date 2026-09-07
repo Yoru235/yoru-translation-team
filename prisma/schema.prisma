@@ -1,10 +1,12 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider   = "prisma-client"
+  runtime    = "cloudflare"
+  output     = "../app/generated/prisma"
+  engineType = "client"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
 }
 
 model User {
@@ -120,7 +122,7 @@ model Manga {
   isLocked           Boolean           @default(false)
   passwordHash       String?
   passwordHint       String?
-  genres             String[]
+  genres Json
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
 

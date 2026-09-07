@@ -46,7 +46,7 @@ export async function PUT(request: Request) {
       );
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as any;
 
     const avatar =
       typeof body.avatar === "string"

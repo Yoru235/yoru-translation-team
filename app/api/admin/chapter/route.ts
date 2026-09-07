@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
 import { cookies } from "next/headers";
 import { createUnlockToken } from "@/lib/auth/unlock-token";
+import { env } from "cloudflare:workers";
 
 export async function GET(request: Request) {
   try {
@@ -108,10 +109,7 @@ const chapterUnlocked =
     isLocked:
       chapter.manga.isLocked && !mangaUnlocked,
   },
-  images: chapter.images.map((image) => ({
-    ...image,
-    imageUrl: `/api/image/${image.id}`,
-  })),
+  images: chapter.images,
 };
 
       return NextResponse.json({
@@ -146,13 +144,10 @@ const chapterUnlocked =
     // ==========================================
 
     const protectedChapters =
-      chapters.map((chapter) => ({
-        ...chapter,
-        images: chapter.images.map((image) => ({
-          ...image,
-          imageUrl: `/api/image/${image.id}`,
-        })),
-      }));
+  chapters.map((chapter) => ({
+    ...chapter,
+    images: chapter.images,
+  }));
 
     return NextResponse.json({
       success: true,
@@ -174,7 +169,13 @@ const chapterUnlocked =
 }
 export async function POST(request: Request) {
   try {
+    console.log("===== CREATE CHAPTER START =====");
+
+    console.log("CHECKING USER...");
+
     const user = await getCurrentUser();
+
+    console.log("USER RESULT:", user);
 
     if (
       !user ||
@@ -284,8 +285,10 @@ const {
       phải dùng credit nào.
     */
 
-    const manga =
-      await prisma.manga.findUnique({
+    console.log("FINDING MANGA:", mangaId);
+
+const manga =
+  await prisma.manga.findUnique({
         where: {
           id: mangaId,
         },
@@ -295,7 +298,7 @@ const {
           creditUrl: true,
         },
       });
-
+console.log("MANGA RESULT:", manga);
     if (!manga) {
       return NextResponse.json(
         {
@@ -304,7 +307,14 @@ const {
         { status: 404 }
       );
     }
-
+console.log(
+  "MANGA CREDIT CHECK:",
+  {
+    id: manga.id,
+    title: manga.title,
+    creditUrl: manga.creditUrl,
+  }
+);
     // ================================
     // KIỂM TRA VOLUME
     // ================================
@@ -423,41 +433,23 @@ const {
       (a, b) => a.order - b.order
     );
 
-    // ================================
-    // THÊM CREDIT VÀO CUỐI CHAPTER
-    // ================================
 
-    /*
-      Nếu truyện có credit:
-      - Không cần upload lại credit.
-      - Không cần chọn credit khi upload chapter.
-      - Lấy trực tiếp creditUrl đã lưu trong Manga.
-      - Credit luôn nằm SAU CÙNG tất cả ảnh chapter.
-    */
-
-    if (manga.creditUrl) {
-      const lastOrder =
-        validImages.length > 0
-          ? Math.max(
-              ...validImages.map(
-                (image) => image.order
-              )
-            )
-          : 0;
-
-      validImages.push({
-        imageUrl: manga.creditUrl,
-        fileName: "credit-re.jpg",
-        order: lastOrder + 1,
-      });
-    }
 
     // ================================
     // TẠO CHAPTER + ẢNH
     // ================================
+console.log(
+  "CREATING CHAPTER...",
+  {
+    mangaId: manga.id,
+    chapter: chapterNumber,
+    imageCount: validImages.length,
+    chapterType,
+  }
+);
 
-    const newChapter =
-      await prisma.chapter.create({
+const newChapter =
+  await prisma.chapter.create({
         data: {
           mangaId: manga.id,
 
@@ -508,9 +500,7 @@ content:
         success: true,
 
         message:
-          manga.creditUrl
-            ? "Upload chapter thành công và đã tự động thêm credit của truyện."
-            : "Upload chapter thành công.",
+  "Upload chapter thành công.",
 
         chapter: newChapter,
 
@@ -711,7 +701,7 @@ const {
 }
 
 // ==========================================
-// XÓA CHAPTER
+// XÓA CHAPTER + ẢNH TRONG R2
 // ==========================================
 
 export async function DELETE(request: Request) {
@@ -751,13 +741,16 @@ export async function DELETE(request: Request) {
     }
 
     // ==========================================
-    // KIỂM TRA CHAPTER CÓ TỒN TẠI
+    // LẤY CHAPTER VÀ ẢNH
     // ==========================================
 
     const existingChapter =
       await prisma.chapter.findUnique({
         where: {
           id: chapterId,
+        },
+        include: {
+          images: true,
         },
       });
 
@@ -771,17 +764,32 @@ export async function DELETE(request: Request) {
     }
 
     // ==========================================
-    // XÓA ẢNH CỦA CHAPTER
+    // XÓA ẢNH KHỎI CLOUDFLARE R2
+    // ==========================================
+
+    for (const image of existingChapter.images) {
+  const imageUrl = image.imageUrl;
+
+  if (imageUrl.startsWith("/uploads/")) {
+    const objectKey =
+      imageUrl.replace("/uploads/", "");
+
+    await env.UPLOADS.delete(objectKey);
+  }
+}
+
+    // ==========================================
+    // XÓA ẢNH KHỎI DATABASE
     // ==========================================
 
     await prisma.chapterImage.deleteMany({
       where: {
-        chapterId: chapterId,
+        chapterId,
       },
     });
 
     // ==========================================
-    // XÓA CHAPTER
+    // XÓA CHAPTER KHỎI DATABASE
     // ==========================================
 
     await prisma.chapter.delete({
@@ -790,13 +798,10 @@ export async function DELETE(request: Request) {
       },
     });
 
-    // ==========================================
-    // TRẢ KẾT QUẢ
-    // ==========================================
-
     return NextResponse.json({
       success: true,
-      message: "Đã xóa chapter thành công.",
+      message:
+        "Đã xóa chapter và ảnh khỏi Cloudflare R2.",
       chapterId,
     });
   } catch (error) {
@@ -807,7 +812,9 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json(
       {
-        error: "Không thể xóa chapter.",
+        success: false,
+        error:
+          "Không thể xóa chapter.",
       },
       { status: 500 }
     );

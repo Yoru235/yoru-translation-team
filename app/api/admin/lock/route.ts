@@ -22,7 +22,7 @@ export async function PUT(request: Request) {
         { status: 403 }
       );
     }
-    const body = await request.json();
+    const body = (await request.json()) as any;
 
     const {
       mangaId,
@@ -158,7 +158,7 @@ export async function POST(request: Request) {
         { status: 403 }
       );
     }
-    const body = await request.json();
+    const body = (await request.json()) as any;
 
     const {
       chapterId,

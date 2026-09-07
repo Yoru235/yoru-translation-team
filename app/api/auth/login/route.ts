@@ -6,13 +6,13 @@ import { createSession } from "@/lib/auth/session";
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as {
-  email?: string;
-  password?: string;
-};
+      email?: string;
+      password?: string;
+    };
 
-const { email, password } = body;
+    const { email, password } = body;
 
-if (!email || !password) {
+    if (!email || !password) {
       return NextResponse.json(
         {
           success: false,
@@ -22,11 +22,15 @@ if (!email || !password) {
       );
     }
 
+    console.log("LOGIN: before prisma");
+
     const user = await prisma.user.findUnique({
       where: {
         email,
       },
     });
+
+    console.log("LOGIN: after prisma");
 
     if (!user) {
       return NextResponse.json(
@@ -48,10 +52,14 @@ if (!email || !password) {
       );
     }
 
+    console.log("LOGIN: before bcrypt");
+
     const passwordValid = await bcrypt.compare(
       password,
       user.passwordHash
     );
+
+    console.log("LOGIN: after bcrypt");
 
     if (!passwordValid) {
       return NextResponse.json(
@@ -63,7 +71,12 @@ if (!email || !password) {
       );
     }
 
+    console.log("LOGIN: before session");
+
     await createSession(user.id);
+
+    console.log("LOGIN: after session");
+
     return NextResponse.json({
       success: true,
       message: "Đăng nhập thành công.",
@@ -73,7 +86,7 @@ if (!email || !password) {
         role: user.role,
       },
     });
-    } catch (error) {
+  } catch (error) {
     console.error("LOGIN ERROR:", error);
 
     return NextResponse.json(

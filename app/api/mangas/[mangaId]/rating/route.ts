@@ -49,7 +49,7 @@ export async function POST(
 ) {
   try {
     const { mangaId } = await params;
-    const body = await request.json();
+    const body = (await request.json()) as any;
 
     const value = Number(body.value);
 

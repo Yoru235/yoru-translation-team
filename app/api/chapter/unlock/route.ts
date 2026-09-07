@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     // ĐỌC DỮ LIỆU
     // ==========================================
 
-    const body = await request.json();
+    const body = (await request.json()) as any;
 
     const {
       mangaId,

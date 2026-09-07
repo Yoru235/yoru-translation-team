@@ -80,7 +80,7 @@ export default function MangaAdminPage() {
   }
 );
 
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       if (!response.ok || !data.success) {
         throw new Error(
@@ -138,7 +138,7 @@ export default function MangaAdminPage() {
           passwordHint: lockPasswordHint,
         }),
       });
-    const data = await response.json();
+    const data = (await response.json()) as any;
 
 if (!response.ok || !data.success) {
   throw new Error(
@@ -193,7 +193,7 @@ const handleLockChapter = async (chapter: Chapter) => {
         }),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as any;
 
       if (!response.ok || !data.success) {
         throw new Error(
@@ -248,7 +248,7 @@ try {
     }),
   });
 
-  const data = await response.json();
+  const data = (await response.json()) as any;
 
   if (!response.ok || !data.success) {
     throw new Error(
