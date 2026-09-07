@@ -13,6 +13,7 @@ type MangaInfo = {
   id: string;
   title: string;
   coverUrl: string | null;
+  creditUrl: string | null;
   type: string;
   isLocked: boolean;
   passwordHint: string | null;
@@ -67,6 +68,8 @@ export default function ChapterReaderPage({
 
   const [chapter, setChapter] =
     useState<Chapter | null>(null);
+  const [novelContent, setNovelContent] =
+  useState("");
 
   const [chapters, setChapters] =
     useState<ChapterListItem[]>([]);
@@ -233,7 +236,46 @@ setIsLoggedIn(
 
     void checkLogin();
   }, []);
+useEffect(() => {
+  const loadNovelContent = async () => {
+    if (
+      !chapter ||
+      chapter.chapterType !== "Novel" ||
+      !chapter.content
+    ) {
+      setNovelContent("");
+      return;
+    }
 
+    try {
+      const response = await fetch(
+        chapter.content,
+        {
+          cache: "no-store",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          "Không thể tải nội dung Novel."
+        );
+      }
+
+      const text = await response.text();
+
+      setNovelContent(text);
+    } catch (error) {
+      console.error(
+        "LOAD NOVEL CONTENT ERROR:",
+        error
+      );
+
+      setNovelContent("");
+    }
+  };
+
+  void loadNovelContent();
+}, [chapter]);
   const currentIndex =
     chapters.findIndex(
       (item) =>
@@ -594,8 +636,8 @@ chapter.content ? (
       }
     >
       <div className="whitespace-pre-wrap select-none">
-        {chapter.content}
-      </div>
+  {chapter.content}
+</div>
     </article>
 
     {/* CRE CUỐI NOVEL */}
@@ -683,6 +725,28 @@ chapter.content ? (
 
         </div>
       </section>
+      {/* CREDIT / CRE CUỐI CHAPTER */}
+
+{chapter.manga.creditUrl && (
+  <section className="border-t border-gray-900 bg-black">
+    <div className="yoru-reader-images flex flex-col items-center select-none">
+      <img
+        src={chapter.manga.creditUrl}
+        alt={`${chapter.manga.title} - Credit`}
+        className="block h-auto w-full"
+        draggable={false}
+        loading="lazy"
+        decoding="async"
+        onContextMenu={(event) =>
+          event.preventDefault()
+        }
+        onDragStart={(event) =>
+          event.preventDefault()
+        }
+      />
+    </div>
+  </section>
+)}
       {/* CUỐI CHAPTER */}
 
       <section className="border-t border-gray-900 bg-[#080808]">

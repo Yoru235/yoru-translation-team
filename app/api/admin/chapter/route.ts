@@ -100,15 +100,49 @@ const chapterUnlocked =
       // ĐỔI URL ẢNH SANG API BẢO VỆ
       // ==========================================
 
-      const protectedChapter = {
+      let chapterContent = chapter.content;
+
+if (
+  chapter.chapterType === "Novel" &&
+  chapter.content
+) {
+  try {
+    const objectKey = chapter.content.replace(
+      /^\/uploads\//,
+      ""
+    );
+
+    const novelObject =
+      await env.UPLOADS.get(objectKey);
+
+    if (novelObject) {
+      chapterContent =
+        await novelObject.text();
+    }
+  } catch (error) {
+    console.error(
+      "LOAD NOVEL FROM R2 ERROR:",
+      error
+    );
+  }
+}
+
+const protectedChapter = {
   ...chapter,
+
+  content: chapterContent,
+
   isLocked:
     chapter.isLocked && !chapterUnlocked,
+
   manga: {
     ...chapter.manga,
+
     isLocked:
-      chapter.manga.isLocked && !mangaUnlocked,
+      chapter.manga.isLocked &&
+      !mangaUnlocked,
   },
+
   images: chapter.images,
 };
 
@@ -434,7 +468,34 @@ console.log(
     );
 
 
+// ================================
+// UPLOAD NỘI DUNG NOVEL LÊN R2
+// ================================
 
+let novelContentKey: string | null = null;
+
+if (
+  chapterType === "Novel" &&
+  typeof content === "string" &&
+  content.trim()
+) {
+  const fileName =
+    `novels/${manga.id}/${Date.now()}-chapter-${chapterNumber}.txt`;
+
+  await env.UPLOADS.put(
+    fileName,
+    content.trim(),
+    {
+      httpMetadata: {
+        contentType:
+          "text/plain; charset=utf-8",
+      },
+    }
+  );
+
+  novelContentKey =
+    `/uploads/${fileName}`;
+}
     // ================================
     // TẠO CHAPTER + ẢNH
     // ================================
@@ -462,12 +523,7 @@ const newChapter =
     ? chapterType.trim()
     : "Manga",
 
-content:
-  chapterType === "Novel" &&
-  typeof content === "string" &&
-  content.trim()
-    ? content.trim()
-    : null,
+content: novelContentKey,
           isH: Boolean(isH),
           isEnd: Boolean(isEnd),
 

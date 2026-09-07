@@ -983,7 +983,7 @@ const getBannerIndex = (offset: number) => {
                     <div className="mt-4 flex items-center justify-between gap-2">
 
                       <p className="text-sm font-semibold text-pink-500">
-                        ❤️ 0 lượt xem
+                        ❤️ {manga.views.toLocaleString("vi-VN")} lượt xem
                       </p>
 
                       <span
@@ -1087,8 +1087,8 @@ const getBannerIndex = (offset: number) => {
                   </p>
 
                   <p className="mt-2 text-sm text-pink-500">
-                    ❤️ 0 lượt xem
-                  </p>
+  ❤️ {manga.views.toLocaleString("vi-VN")} lượt xem
+</p>
                 </div>
 
                 <span
@@ -1124,9 +1124,9 @@ const getBannerIndex = (offset: number) => {
 
           <div className="mt-7 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
 
-            {filteredManga
-              .slice(0, 4)
-              .map((manga) => (
+            {hotManga
+  .slice(0, 4)
+  .map((manga) => (
                 <a
                   key={`hot-${manga.id}`}
                   href={`/manga/${manga.id}`}
@@ -1151,8 +1151,8 @@ const getBannerIndex = (offset: number) => {
                     </h3>
 
                     <p className="mt-2 text-sm text-pink-500">
-                      ❤️ 0 lượt xem
-                    </p>
+  ❤️ {manga.views.toLocaleString("vi-VN")} lượt xem
+</p>
 
                   </div>
                 </a>

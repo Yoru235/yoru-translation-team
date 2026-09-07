@@ -6,7 +6,9 @@ const ALLOWED_PREFIXES = [
   "credits/",
   "avatars/",
   "chapters/",
+  "novels/",
 ];
+
 function isAllowedKey(key: string) {
   if (
     key.includes("..") ||
@@ -31,14 +33,22 @@ function getContentType(key: string) {
     case "jpg":
     case "jpeg":
       return "image/jpeg";
+
     case "png":
       return "image/png";
+
     case "webp":
       return "image/webp";
+
     case "gif":
       return "image/gif";
+
     case "bmp":
       return "image/bmp";
+
+    case "txt":
+      return "text/plain; charset=utf-8";
+
     default:
       return "application/octet-stream";
   }
@@ -79,10 +89,17 @@ export async function GET(
         getContentType(objectKey)
     );
 
-    headers.set(
-      "Cache-Control",
-      "public, max-age=31536000, immutable"
-    );
+    if (objectKey.startsWith("novels/")) {
+      headers.set(
+        "Cache-Control",
+        "public, max-age=300"
+      );
+    } else {
+      headers.set(
+        "Cache-Control",
+        "public, max-age=31536000, immutable"
+      );
+    }
 
     return new NextResponse(object.body, {
       status: 200,
@@ -92,7 +109,7 @@ export async function GET(
     console.error("R2 MEDIA ERROR:", error);
 
     return new NextResponse(
-      "Không thể tải ảnh.",
+      "Không thể tải nội dung.",
       { status: 500 }
     );
   }
