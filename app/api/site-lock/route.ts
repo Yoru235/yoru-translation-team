@@ -1,8 +1,27 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
   SITE_LOCK_COOKIE,
   createSiteLockToken,
+  isValidSiteLockToken,
 } from "@/lib/site-lock";
+
+export async function GET(request: NextRequest) {
+  try {
+    const token = request.cookies.get(
+      SITE_LOCK_COOKIE
+    )?.value;
+
+    return NextResponse.json({
+      success: true,
+      unlocked: isValidSiteLockToken(token),
+    });
+  } catch {
+    return NextResponse.json({
+      success: true,
+      unlocked: false,
+    });
+  }
+}
 
 export async function POST(request: Request) {
   try {

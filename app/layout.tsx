@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import SiteGate from "./components/SiteGate";
 
 export const metadata: Metadata = {
   title: "Yoru Translation Group",
@@ -13,7 +14,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi">
-      <body>{children}</body>
+      <body>
+        <SiteGate>
+          {children}
+        </SiteGate>
+      </body>
     </html>
   );
 }
