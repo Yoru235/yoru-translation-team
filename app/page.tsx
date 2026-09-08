@@ -232,32 +232,25 @@ const filteredManga = mangaList.filter((manga) => {
   return matchesSearch && matchesFilter;
 });
   const hotManga = [...mangaList]
-  .sort((a, b) => b.views - a.views)
-  .slice(0, 6);
+  .sort((a, b) => b.views - a.views);
 
 const newManga = [...mangaList]
   .sort(
     (a, b) =>
       new Date(b.updatedAt).getTime() -
       new Date(a.updatedAt).getTime()
-  )
-  .slice(0, 6);
+  );
 
 const completedManga = mangaList
-  .filter((manga) => manga.status === "completed")
-  .slice(0, 6);
-
+  .filter((manga) => manga.status === "completed");
 const mangaOnly = mangaList
-  .filter((manga) => manga.type.toLowerCase() === "manga")
-  .slice(0, 6);
+  .filter((manga) => manga.type.toLowerCase() === "manga");
 
 const manhwaOnly = mangaList
-  .filter((manga) => manga.type.toLowerCase() === "manhwa")
-  .slice(0, 6);
+  .filter((manga) => manga.type.toLowerCase() === "manhwa");
 
 const manhuaOnly = mangaList
-  .filter((manga) => manga.type.toLowerCase() === "manhua")
-  .slice(0, 6);
+  .filter((manga) => manga.type.toLowerCase() === "manhua");
   const bannerManga = mangaList.slice(0, 7);
 
 useEffect(() => {
@@ -931,9 +924,7 @@ const getBannerIndex = (offset: number) => {
         ) : (
           <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
 
-            {filteredManga
-              .slice(0, 4)
-              .map((manga) => (
+            {filteredManga.map((manga) => (
                 <a
                   key={manga.id}
                   href={`/manga/${manga.id}`}
@@ -1040,9 +1031,7 @@ const getBannerIndex = (offset: number) => {
 
         <div className="grid gap-4">
 
-          {filteredManga
-            .slice(0, 3)
-            .map((manga) => (
+          {filteredManga.map((manga) => (
               <a
                 key={`update-${manga.id}`}
                 href={`/manga/${manga.id}`}
@@ -1124,16 +1113,14 @@ const getBannerIndex = (offset: number) => {
 
           <div className="mt-7 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
 
-            {hotManga
-  .slice(0, 4)
-  .map((manga) => (
+            {hotManga.map((manga) => (
                 <a
                   key={`hot-${manga.id}`}
                   href={`/manga/${manga.id}`}
                   className="overflow-hidden rounded-2xl bg-white shadow-lg transition hover:-translate-y-2"
                 >
                   {manga.coverUrl ? (
-                    <img
+                    <img 
                       src={manga.coverUrl}
                       alt={manga.title}
                       className="h-60 w-full object-cover"
