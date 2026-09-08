@@ -5,6 +5,10 @@ import SiteGate from "./components/SiteGate";
 export const metadata: Metadata = {
   title: "Yoru Translation Group",
   description: "Manga · Manhwa · Manhua",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({
