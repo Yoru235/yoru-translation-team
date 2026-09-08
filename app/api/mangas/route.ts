@@ -12,7 +12,7 @@ export async function GET() {
           createdAt: "desc",
         },
       ],
-      take: 5,
+      
       select: {
         id: true,
         title: true,
