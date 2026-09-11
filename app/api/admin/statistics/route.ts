@@ -14,44 +14,82 @@ export async function GET() {
     const startOf30Days = new Date(now);
     startOf30Days.setDate(startOf30Days.getDate() - 30);
 
-    const [
-      totalViews,
-      todayViews,
-      views7Days,
-      views30Days,
-      totalMangas,
-      totalChapters,
-    ] = await Promise.all([
-      prisma.mangaView.count(),
+    // MyPhungg
+    type ViewStatsResult = {
+      totalViews: bigint | number;
+      todayViews: bigint | number;
+      views7Days: bigint | number;
+      views30Days: bigint | number;
+    };
 
-      prisma.mangaView.count({
-        where: {
-          viewedAt: {
-            gte: startOfToday,
-          },
-        },
-      }),
+    type ContentStatsResult = {
+      totalMangas: bigint | number;
+      totalChapters: bigint | number;
+    };
 
-      prisma.mangaView.count({
-        where: {
-          viewedAt: {
-            gte: startOf7Days,
-          },
-        },
-      }),
+    // 1. Gộp 4 câu count của MangaView thành 1 query duy nhất
+    const [viewStats] = await prisma.$queryRaw<ViewStatsResult[]>`
+      SELECT 
+        COUNT(*) as totalViews,
+        COUNT(CASE WHEN "viewedAt" >= ${startOfToday} THEN 1 END) as todayViews,
+        COUNT(CASE WHEN "viewedAt" >= ${startOf7Days} THEN 1 END) as views7Days,
+        COUNT(CASE WHEN "viewedAt" >= ${startOf30Days} THEN 1 END) as views30Days
+      FROM "MangaView"
+    `;
 
-      prisma.mangaView.count({
-        where: {
-          viewedAt: {
-            gte: startOf30Days,
-          },
-        },
-      }),
+    // 2. Đếm tổng số Manga và Chapter bằng SQL thô (hoặc dùng 2 câu prisma.count tuần tự)
+    const [contentStats] = await prisma.$queryRaw<ContentStatsResult[]>`
+      SELECT 
+        (SELECT COUNT(*) FROM "Manga") as totalMangas,
+        (SELECT COUNT(*) FROM "Chapter") as totalChapters
+    `;
 
-      prisma.manga.count(),
+    // 3. Ép kiểu về number (vì $queryRaw trong SQLite/D1 hoặc Postgres có thể trả về kiểu BigInt)
+    const totalViews = Number(viewStats?.totalViews || 0);
+    const todayViews = Number(viewStats?.todayViews || 0);
+    const views7Days = Number(viewStats?.views7Days || 0);
+    const views30Days = Number(viewStats?.views30Days || 0);
 
-      prisma.chapter.count(),
-    ]);
+    const totalMangas = Number(contentStats?.totalMangas || 0);
+    const totalChapters = Number(contentStats?.totalChapters || 0);
+    // const [
+    //   totalViews,
+    //   todayViews,
+    //   views7Days,
+    //   views30Days,
+    //   totalMangas,
+    //   totalChapters,
+    // ] = await Promise.all([
+    //   prisma.mangaView.count(),
+
+    //   prisma.mangaView.count({
+    //     where: {
+    //       viewedAt: {
+    //         gte: startOfToday,
+    //       },
+    //     },
+    //   }),
+
+    //   prisma.mangaView.count({
+    //     where: {
+    //       viewedAt: {
+    //         gte: startOf7Days,
+    //       },
+    //     },
+    //   }),
+
+    //   prisma.mangaView.count({
+    //     where: {
+    //       viewedAt: {
+    //         gte: startOf30Days,
+    //       },
+    //     },
+    //   }),
+
+    //   prisma.manga.count(),
+
+    //   prisma.chapter.count(),
+    // ]);
 
     const topMangas = await prisma.manga.findMany({
       select: {

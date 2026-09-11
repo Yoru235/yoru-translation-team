@@ -97,14 +97,14 @@ export async function GET(request: Request) {
         creditUrl: true,
         translationGroupId: true,
 
-translationGroup: {
-  select: {
-    id: true,
-    name: true,
-    slug: true,
-    avatar: true,
-  },
-},
+        translationGroup: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            avatar: true,
+          },
+        },
         views: true,
         genres: true,
         isLocked: true,
