@@ -34,6 +34,21 @@
     "database_name": "yoru-database",
     "database_id": "63377740-41f3-44e6-a9ef-86d21ec32a01",
     "remote": true
+  }],
+  
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true,
+      "persist": true
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true
+    }
   }
-]
+  
+
 }
