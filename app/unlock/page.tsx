@@ -2,7 +2,9 @@
 
 import { FormEvent, useState } from "react";
 
-const PASSWORD_HINT = "Biệt danh trong dis của Yoru **** (viết lại chữ Yoru+bấm cách+****";
+const PASSWORD_HINT =
+  "Biệt danh trong dis của Yoru **** (viết lại chữ Yoru+bấm cách+****";
+const URL_DISCORD = "https://discord.gg/GxBEq2bWJ";
 
 export default function UnlockPage() {
   const [password, setPassword] = useState("");
@@ -58,14 +60,12 @@ export default function UnlockPage() {
           <img
             src="/logo.png"
             alt="Yoru Translation Team"
-            className="h-20 w-20 rounded-2xl object-contain"
+            className="h-30 w-100 rounded-2xl object-contain"
           />
         </div>
 
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Nhập mật khẩu
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">Nhập mật khẩu</h1>
 
           <p className="mt-2 text-sm leading-6 text-gray-600">
             Website hiện đang được bảo vệ.
@@ -76,10 +76,21 @@ export default function UnlockPage() {
 
         {/* GỢI Ý */}
         <div className="mt-5 rounded-xl bg-purple-50 px-4 py-3 text-sm text-purple-700">
-          <span className="font-semibold">Gợi ý:</span>{" "}
-          {PASSWORD_HINT}
+          <span className="font-semibold">Gợi ý:</span> {PASSWORD_HINT}
         </div>
-
+        <div className="mt-2 rounded-xl bg-purple-50 px-4 py-3 text-sm text-purple-700">
+          <span className="font-semibold">
+            Link discord cho tình iu nào chưa tham gia nhoa~:
+          </span>{" "}
+          <a
+            href={URL_DISCORD}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-purple-900"
+          >
+            {URL_DISCORD}
+          </a>
+        </div>
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           <div className="relative">
             <input
@@ -100,11 +111,7 @@ export default function UnlockPage() {
             </button>
           </div>
 
-          {error && (
-            <p className="text-sm font-medium text-red-600">
-              {error}
-            </p>
-          )}
+          {error && <p className="text-sm font-medium text-red-600">{error}</p>}
 
           <button
             type="submit"
