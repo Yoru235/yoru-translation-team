@@ -4,6 +4,8 @@ type Manga = {
   id: string;
   title: string;
   coverUrl: string | null;
+  type?: string | null;
+  slug?: string | null;
 };
 
 type MangaSectionProps = {
@@ -32,6 +34,8 @@ export default function MangaSection({
             id={manga.id}
             title={manga.title}
             coverUrl={manga.coverUrl}
+            type={manga.type}
+            slug={(manga as any).slug}
           />
         ))}
       </div>

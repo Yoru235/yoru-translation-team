@@ -6,9 +6,16 @@ import SiteGate from "./components/SiteGate";
 export const metadata: Metadata = {
   title: "Yoru Translation Group",
   description: "Manga · Manhwa · Manhua",
+  // Cấu hình cũ cho phép index (tạm comment lại):
+  // robots: {
+  //   index: true,
+  //   follow: true,
+  // },
+  // Tạm thời chặn tất cả các bot (noindex):
   robots: {
     index: false,
     follow: false,
+    nocache: true,
   },
 };
 

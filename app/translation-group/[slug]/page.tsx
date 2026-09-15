@@ -1,97 +1,44 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import MangaCard from "@/app/components/MangaCard";
 
-type Manga = {
-  id: string;
-  title: string;
-  coverUrl: string | null;
-  type: string;
-  status: string;
-  views: number;
+type PageProps = {
+  params: Promise<{
+    slug: string;
+  }>;
 };
 
-type TranslationGroup = {
-  id: string;
-  name: string;
-  slug: string;
-  avatar: string | null;
-  description: string | null;
-  mangas: Manga[];
-  _count: {
-    mangas: number;
-  };
-};
+export default async function TranslationGroupPage({ params }: PageProps) {
+  const { slug } = await params;
 
-export default function TranslationGroupPage() {
-  const params = useParams();
-  const slug = params.slug as string;
+  const group = await prisma.translationGroup.findUnique({
+    where: {
+      slug,
+    },
+    include: {
+      mangas: {
+        orderBy: {
+          createdAt: "desc",
+        },
+        select: {
+          id: true,
+          title: true,
+          coverUrl: true,
+          type: true,
+          status: true,
+          views: true,
+        },
+      },
+      _count: {
+        select: {
+          mangas: true,
+        },
+      },
+    },
+  });
 
-  const [group, setGroup] =
-    useState<TranslationGroup | null>(null);
-
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    const loadGroup = async () => {
-      try {
-        setIsLoading(true);
-
-        const response = await fetch(
-          `/api/translation-groups/${slug}`,
-          {
-            cache: "no-store",
-          },
-        );
-
-        const data = (await response.json()) as any;
-
-        if (!response.ok || !data.success) {
-          throw new Error(
-            data.error || "Không thể tải nhóm dịch.",
-          );
-        }
-
-        setGroup(data.group);
-      } catch (error) {
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Không thể tải nhóm dịch.",
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void loadGroup();
-  }, [slug]);
-
-  if (isLoading) {
-    return (
-      <main className="mx-auto max-w-7xl px-6 py-16">
-        <p className="text-gray-500">
-          Đang tải nhóm dịch...
-        </p>
-      </main>
-    );
-  }
-
-  if (error || !group) {
-    return (
-      <main className="mx-auto max-w-7xl px-6 py-16">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Không tìm thấy nhóm dịch
-        </h1>
-
-        <p className="mt-2 text-gray-500">
-          {error}
-        </p>
-      </main>
-    );
+  if (!group) {
+    notFound();
   }
 
   return (

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth/session";
 
 /*
   GET /api/user/level
@@ -15,7 +16,8 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
 
-    const userId = searchParams.get("userId");
+    const currentUser = await getCurrentUser();
+    const userId = searchParams.get("userId") || currentUser?.id;
 
     if (!userId) {
       return NextResponse.json(

@@ -69,7 +69,7 @@ export default function ChapterReaderPage({
   const [chapter, setChapter] =
     useState<Chapter | null>(null);
   const [novelContent, setNovelContent] =
-  useState("");
+    useState("");
 
   const [chapters, setChapters] =
     useState<ChapterListItem[]>([]);
@@ -79,12 +79,12 @@ export default function ChapterReaderPage({
 
   const [error, setError] =
     useState("");
-    const [password, setPassword] = useState("");
-    const [isUnlocking, setIsUnlocking] = useState(false);
-    const [unlockError, setUnlockError] = useState("");
-    const [isUnlocked, setIsUnlocked] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [isCheckingLogin, setIsCheckingLogin] = useState(true);
+  const [password, setPassword] = useState("");
+  const [isUnlocking, setIsUnlocking] = useState(false);
+  const [unlockError, setUnlockError] = useState("");
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isCheckingLogin, setIsCheckingLogin] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -117,7 +117,7 @@ export default function ChapterReaderPage({
         if (!response.ok || !data.success) {
           throw new Error(
             data.error ||
-              "Không thể tải chapter."
+            "Không thể tải chapter."
           );
         }
 
@@ -130,30 +130,30 @@ export default function ChapterReaderPage({
         if (cancelled) return;
 
         setChapter(data.chapter);
-        
+
         if (data.chapter.isLocked) {
-  setChapter(data.chapter);
-  setIsLoading(false);
-  return;
-}
-await fetch("/api/history", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    chapterId: data.chapter.id,
-  }),
-});
+          setChapter(data.chapter);
+          setIsLoading(false);
+          return;
+        }
+        await fetch("/api/history", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            chapterId: data.chapter.id,
+          }),
+        });
         await fetch("/api/view", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    mangaId: data.chapter.mangaId,
-  }),
-});
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            mangaId: data.chapter.mangaId,
+          }),
+        });
 
         const mangaResponse =
           await fetch(
@@ -209,7 +209,7 @@ await fetch("/api/history", {
       cancelled = true;
     };
   }, [params]);
-    useEffect(() => {
+  useEffect(() => {
     const checkLogin = async () => {
       try {
         const response = await fetch("/api/auth/me", {
@@ -217,15 +217,15 @@ await fetch("/api/history", {
         });
 
         const data = (await response.json()) as {
-  success?: boolean;
-  user?: unknown;
-};
+          success?: boolean;
+          user?: unknown;
+        };
 
-setIsLoggedIn(
-  response.ok &&
-  data.success === true &&
-  !!data.user
-);
+        setIsLoggedIn(
+          response.ok &&
+          data.success === true &&
+          !!data.user
+        );
       } catch (error) {
         console.error("CHECK LOGIN ERROR:", error);
         setIsLoggedIn(false);
@@ -236,46 +236,51 @@ setIsLoggedIn(
 
     void checkLogin();
   }, []);
-useEffect(() => {
-  const loadNovelContent = async () => {
-    if (
-      !chapter ||
-      chapter.chapterType !== "Novel" ||
-      !chapter.content
-    ) {
-      setNovelContent("");
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        chapter.content,
-        {
-          cache: "no-store",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          "Không thể tải nội dung Novel."
-        );
+  useEffect(() => {
+    const loadNovelContent = async () => {
+      if (
+        !chapter ||
+        chapter.chapterType !== "Novel" ||
+        !chapter.content
+      ) {
+        setNovelContent("");
+        return;
       }
 
-      const text = await response.text();
+      if (!chapter.content.startsWith("/uploads/") && !chapter.content.startsWith("http")) {
+        setNovelContent(chapter.content);
+        return;
+      }
 
-      setNovelContent(text);
-    } catch (error) {
-      console.error(
-        "LOAD NOVEL CONTENT ERROR:",
-        error
-      );
+      try {
+        const response = await fetch(
+          chapter.content,
+          {
+            cache: "no-store",
+          }
+        );
 
-      setNovelContent("");
-    }
-  };
+        if (!response.ok) {
+          throw new Error(
+            "Không thể tải nội dung Novel."
+          );
+        }
 
-  void loadNovelContent();
-}, [chapter]);
+        const text = await response.text();
+
+        setNovelContent(text);
+      } catch (error) {
+        console.error(
+          "LOAD NOVEL CONTENT ERROR:",
+          error
+        );
+
+        setNovelContent("");
+      }
+    };
+
+    void loadNovelContent();
+  }, [chapter]);
   const currentIndex =
     chapters.findIndex(
       (item) =>
@@ -289,59 +294,59 @@ useEffect(() => {
 
   const nextChapter =
     currentIndex >= 0 &&
-    currentIndex <
+      currentIndex <
       chapters.length - 1
       ? chapters[currentIndex + 1]
       : null;
-if (isCheckingLogin) {
-  return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-gray-700 border-t-pink-500" />
+  if (isCheckingLogin) {
+    return (
+      <main className="min-h-screen bg-black text-white">
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-gray-700 border-t-pink-500" />
 
-          <p className="mt-5 text-lg font-semibold text-gray-300">
-            Đang kiểm tra tài khoản...
-          </p>
+            <p className="mt-5 text-lg font-semibold text-gray-300">
+              Đang kiểm tra tài khoản...
+            </p>
+          </div>
         </div>
-      </div>
-    </main>
-  );
-}
+      </main>
+    );
+  }
 
-if (!isLoggedIn) {
-  return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="flex min-h-screen items-center justify-center px-6">
-        <div className="w-full max-w-md rounded-2xl border border-gray-800 bg-[#111111] p-8 text-center">
-          <div className="text-5xl">🔒</div>
+  if (!isLoggedIn) {
+    return (
+      <main className="min-h-screen bg-black text-white">
+        <div className="flex min-h-screen items-center justify-center px-6">
+          <div className="w-full max-w-md rounded-2xl border border-gray-800 bg-[#111111] p-8 text-center">
+            <div className="text-5xl">🔒</div>
 
-          <h1 className="mt-4 text-2xl font-bold">
-            Cần đăng nhập để đọc
-          </h1>
+            <h1 className="mt-4 text-2xl font-bold">
+              Cần đăng nhập để đọc
+            </h1>
 
-          <p className="mt-3 text-gray-400">
-            Bạn cần đăng nhập tài khoản Yoru để tiếp tục đọc truyện.
-          </p>
+            <p className="mt-3 text-gray-400">
+              Bạn cần đăng nhập tài khoản Yoru để tiếp tục đọc truyện.
+            </p>
 
-          <a
-            href="/login"
-            className="mt-6 inline-block rounded-xl bg-gradient-to-r from-purple-700 to-pink-600 px-6 py-3 font-bold text-white transition hover:opacity-90"
-          >
-            Đăng nhập
-          </a>
+            <a
+              href="/login"
+              className="mt-6 inline-block rounded-xl bg-gradient-to-r from-purple-700 to-pink-600 px-6 py-3 font-bold text-white transition hover:opacity-90"
+            >
+              Đăng nhập
+            </a>
 
-          <a
-            href="/"
-            className="mt-3 block text-sm text-gray-500 transition hover:text-gray-300"
-          >
-            ← Về trang chủ
-          </a>
+            <a
+              href="/"
+              className="mt-3 block text-sm text-gray-500 transition hover:text-gray-300"
+            >
+              ← Về trang chủ
+            </a>
+          </div>
         </div>
-      </div>
-    </main>
-  );
-}
+      </main>
+    );
+  }
   if (isLoading) {
     return (
       <main className="min-h-screen bg-black text-white">
@@ -357,134 +362,134 @@ if (!isLoggedIn) {
       </main>
     );
   }
-if (chapter?.isLocked || chapter?.manga?.isLocked) {
-  return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="flex min-h-screen items-center justify-center px-6">
-        <div className="w-full max-w-md rounded-2xl border border-yellow-900 bg-[#111111] p-8">
+  if (chapter?.isLocked || chapter?.manga?.isLocked) {
+    return (
+      <main className="min-h-screen bg-black text-white">
+        <div className="flex min-h-screen items-center justify-center px-6">
+          <div className="w-full max-w-md rounded-2xl border border-yellow-900 bg-[#111111] p-8">
 
-          <div className="text-center">
-            <div className="text-5xl">🔒</div>
+            <div className="text-center">
+              <div className="text-5xl">🔒</div>
 
-            <h1 className="mt-4 text-2xl font-bold">
-  {chapter.manga.isLocked
-    ? "Truyện đang bị khóa"
-    : "Chapter đang bị khóa"}
-</h1>
+              <h1 className="mt-4 text-2xl font-bold">
+                {chapter.manga.isLocked
+                  ? "Truyện đang bị khóa"
+                  : "Chapter đang bị khóa"}
+              </h1>
 
-<p className="mt-3 text-gray-400">
-  {chapter.manga.isLocked
-    ? "Nhập mật khẩu để tiếp tục đọc truyện này."
-    : "Nhập mật khẩu để tiếp tục đọc chapter này."}
-</p>
+              <p className="mt-3 text-gray-400">
+                {chapter.manga.isLocked
+                  ? "Nhập mật khẩu để tiếp tục đọc truyện này."
+                  : "Nhập mật khẩu để tiếp tục đọc chapter này."}
+              </p>
 
-            {chapter.passwordHint && (
-              <p className="mt-3 text-sm text-yellow-400">
-                Gợi ý: {chapter.passwordHint}
+              {chapter.passwordHint && (
+                <p className="mt-3 text-sm text-yellow-400">
+                  Gợi ý: {chapter.passwordHint}
+                </p>
+              )}
+            </div>
+
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setUnlockError("");
+              }}
+              placeholder="Nhập mật khẩu"
+              className="mt-6 w-full rounded-xl border border-gray-700 bg-black px-4 py-3 text-sm text-white outline-none focus:border-yellow-600"
+            />
+
+            {unlockError && (
+              <p className="mt-3 text-sm font-semibold text-red-400">
+                {unlockError}
               </p>
             )}
+
+            <button
+              type="button"
+              onClick={async () => {
+                setIsUnlocking(true);
+                setUnlockError("");
+
+                try {
+                  const response = await fetch("/api/chapter/unlock", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(
+                      chapter.manga.isLocked
+                        ? {
+                          mangaId: chapter.manga.id,
+                          password,
+                        }
+                        : {
+                          chapterId: chapter.id,
+                          password,
+                        }
+                    ),
+                  });
+
+                  const data = (await response.json()) as {
+                    success?: boolean;
+                    error?: string;
+                  };
+
+                  if (!response.ok || !data.success) {
+                    throw new Error(
+                      data.error || "Mật khẩu không đúng."
+                    );
+                  }
+                  setIsUnlocked(true);
+
+                  setChapter((current) => {
+                    if (!current) {
+                      return current;
+                    }
+
+                    if (current.manga.isLocked) {
+                      // Mở khóa toàn bộ truyện
+                      return {
+                        ...current,
+                        isLocked: false,
+                        manga: {
+                          ...current.manga,
+                          isLocked: false,
+                        },
+                      };
+                    }
+
+                    // Chỉ mở khóa chapter này
+                    return {
+                      ...current,
+                      isLocked: false,
+                    };
+                  });
+                } catch (error) {
+                  setUnlockError(
+                    error instanceof Error
+                      ? error.message
+                      : "Không thể mở khóa Chapter."
+                  );
+                } finally {
+                  setIsUnlocking(false);
+                }
+              }}
+              disabled={isUnlocking}
+              className="mt-4 w-full rounded-xl bg-yellow-700 px-5 py-3 font-bold text-white transition hover:bg-yellow-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isUnlocking
+                ? "⏳ Đang kiểm tra..."
+                : "🔓 Mở khóa"}
+            </button>
+
           </div>
-
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              setUnlockError("");
-            }}
-            placeholder="Nhập mật khẩu"
-            className="mt-6 w-full rounded-xl border border-gray-700 bg-black px-4 py-3 text-sm text-white outline-none focus:border-yellow-600"
-          />
-
-          {unlockError && (
-            <p className="mt-3 text-sm font-semibold text-red-400">
-              {unlockError}
-            </p>
-          )}
-
-          <button
-            type="button"
-            onClick={async () => {
-  setIsUnlocking(true);
-  setUnlockError("");
-
-  try {
-    const response = await fetch("/api/chapter/unlock", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(
-  chapter.manga.isLocked
-    ? {
-        mangaId: chapter.manga.id,
-        password,
-      }
-    : {
-        chapterId: chapter.id,
-        password,
-      }
-),
-    });
-
-    const data = (await response.json()) as {
-  success?: boolean;
-  error?: string;
-};
-
-if (!response.ok || !data.success) {
-  throw new Error(
-    data.error || "Mật khẩu không đúng."
-  );
-}
-setIsUnlocked(true);
-
-setChapter((current) => {
-  if (!current) {
-    return current;
-  }
-
-  if (current.manga.isLocked) {
-    // Mở khóa toàn bộ truyện
-    return {
-      ...current,
-      isLocked: false,
-      manga: {
-        ...current.manga,
-        isLocked: false,
-      },
-    };
-  }
-
-  // Chỉ mở khóa chapter này
-  return {
-    ...current,
-    isLocked: false,
-  };
-});
-  } catch (error) {
-    setUnlockError(
-      error instanceof Error
-        ? error.message
-        : "Không thể mở khóa Chapter."
-    );
-  } finally {
-    setIsUnlocking(false);
-  }
-}}
-            disabled={isUnlocking}
-            className="mt-4 w-full rounded-xl bg-yellow-700 px-5 py-3 font-bold text-white transition hover:bg-yellow-600 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isUnlocking
-              ? "⏳ Đang kiểm tra..."
-              : "🔓 Mở khóa"}
-          </button>
-
         </div>
-      </div>
-    </main>
-  );
-}
+      </main>
+    );
+  }
   if (error || !chapter) {
     return (
       <main className="min-h-screen bg-black text-white">
@@ -568,10 +573,10 @@ setChapter((current) => {
           </h1>
 
           <p className="mt-2 text-lg font-semibold text-gray-400">
-  {chapter.volume !== null
-    ? `Vol. ${chapter.volume} — Chapter ${chapter.chapter}${chapter.isH ? " - H" : ""}${chapter.isEnd ? " - END" : ""}`
-    : `Chapter ${chapter.chapter}${chapter.isH ? " - H" : ""}${chapter.isEnd ? " - END" : ""}`}
-</p>
+            {chapter.volume !== null
+              ? `Vol. ${chapter.volume} — Chapter ${chapter.chapter}${chapter.isH ? " - H" : ""}${chapter.isEnd ? " - END" : ""}`
+              : `Chapter ${chapter.chapter}${chapter.isH ? " - H" : ""}${chapter.isEnd ? " - END" : ""}`}
+          </p>
         </div>
       </section>
 
@@ -616,69 +621,69 @@ setChapter((current) => {
         </div>
       </div>
 
-            {/* NỘI DUNG CHAPTER */}
+      {/* NỘI DUNG CHAPTER */}
 
       <section className="bg-black">
         <div className="mx-auto max-w-5xl">
 
           {/* NOVEL CÓ NỘI DUNG TEXT */}
           {chapter.chapterType === "Novel" &&
-chapter.content ? (
-  <>
-    {/* NỘI DUNG NOVEL */}
-    <article
-      className="px-6 py-10 text-base leading-8 text-gray-200 sm:px-10 sm:text-lg"
-      onContextMenu={(event) =>
-        event.preventDefault()
-      }
-      onCopy={(event) =>
-        event.preventDefault()
-      }
-    >
-      <div className="whitespace-pre-wrap select-none">
-  {chapter.content}
-</div>
-    </article>
+            chapter.content ? (
+            <>
+              {/* NỘI DUNG NOVEL */}
+              <article
+                className="px-6 py-10 text-base leading-8 text-gray-200 sm:px-10 sm:text-lg"
+                onContextMenu={(event) =>
+                  event.preventDefault()
+                }
+                onCopy={(event) =>
+                  event.preventDefault()
+                }
+              >
+                <div className="whitespace-pre-wrap select-none text-justify">
+                  {novelContent || chapter.content}
+                </div>
+              </article>
 
-    {/* CRE CUỐI NOVEL */}
-    {chapter.images.length > 0 && (
-      <div
-        className="yoru-reader-images flex flex-col items-center select-none"
-        onContextMenu={(event) =>
-          event.preventDefault()
-        }
-        onDragStart={(event) =>
-          event.preventDefault()
-        }
-        onCopy={(event) =>
-          event.preventDefault()
-        }
-      >
-        {chapter.images.map((image) => (
-          <div
-            key={image.id}
-            className="relative w-full"
-          >
-            <img
-              src={image.imageUrl}
-              alt={`${chapter.manga.title} - Chapter ${chapter.chapter} - ${image.fileName}`}
-              className="block h-auto w-full select-none"
-              draggable={false}
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
-        ))}
-      </div>
-    )}
-  </>
+              {/* CRE CUỐI NOVEL */}
+              {chapter.images.length > 0 && (
+                <div
+                  className="yoru-reader-images flex flex-col items-center select-none"
+                  onContextMenu={(event) =>
+                    event.preventDefault()
+                  }
+                  onDragStart={(event) =>
+                    event.preventDefault()
+                  }
+                  onCopy={(event) =>
+                    event.preventDefault()
+                  }
+                >
+                  {chapter.images.map((image) => (
+                    <div
+                      key={image.id}
+                      className="relative w-full"
+                    >
+                      <img
+                        src={image.imageUrl}
+                        alt={`${chapter.manga.title} - Chapter ${chapter.chapter} - ${image.fileName}`}
+                        className="block h-auto w-full select-none"
+                        draggable={false}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
 
-) : chapter.images.length === 0 ? (
+          ) : chapter.images.length === 0 ? (
 
             /* CHAPTER KHÔNG CÓ NỘI DUNG */
             <div className="px-6 py-20 text-center">
               <div className="text-5xl">
-                
+
               </div>
 
               <p className="mt-4 text-lg font-bold text-gray-300">
@@ -727,26 +732,26 @@ chapter.content ? (
       </section>
       {/* CREDIT / CRE CUỐI CHAPTER */}
 
-{chapter.manga.creditUrl && (
-  <section className="border-t border-gray-900 bg-black">
-    <div className="yoru-reader-images flex flex-col items-center select-none">
-      <img
-        src={chapter.manga.creditUrl}
-        alt={`${chapter.manga.title} - Credit`}
-        className="block h-auto w-full"
-        draggable={false}
-        loading="lazy"
-        decoding="async"
-        onContextMenu={(event) =>
-          event.preventDefault()
-        }
-        onDragStart={(event) =>
-          event.preventDefault()
-        }
-      />
-    </div>
-  </section>
-)}
+      {chapter.manga.creditUrl && (
+        <section className="border-t border-gray-900 bg-black">
+          <div className="yoru-reader-images flex flex-col items-center select-none">
+            <img
+              src={chapter.manga.creditUrl}
+              alt={`${chapter.manga.title} - Credit`}
+              className="block h-auto w-full"
+              draggable={false}
+              loading="lazy"
+              decoding="async"
+              onContextMenu={(event) =>
+                event.preventDefault()
+              }
+              onDragStart={(event) =>
+                event.preventDefault()
+              }
+            />
+          </div>
+        </section>
+      )}
       {/* CUỐI CHAPTER */}
 
       <section className="border-t border-gray-900 bg-[#080808]">

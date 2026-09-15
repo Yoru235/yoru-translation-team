@@ -113,7 +113,7 @@ if (
     );
 
     const novelObject =
-      await env.UPLOADS.get(objectKey);
+      env.UPLOADS ? await env.UPLOADS.get(objectKey) : null;
 
     if (novelObject) {
       chapterContent =

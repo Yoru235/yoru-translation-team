@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
+  /*
+  // Cấu hình cũ cho phép Googlebot, Coccocbot quét (tạm comment lại):
   const baseUrl = process.env.URL_WEBSITE;
 
   // Các đường dẫn DÙNG CHUNG cần chặn
@@ -30,5 +32,16 @@ export default function robots(): MetadataRoute.Robots {
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
+  };
+  */
+
+  // Tạm thời chặn TẤT CẢ các bot:
+  return {
+    rules: [
+      {
+        userAgent: "*",
+        disallow: "/",
+      },
+    ],
   };
 }
