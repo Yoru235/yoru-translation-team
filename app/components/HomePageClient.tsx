@@ -90,11 +90,15 @@ export default function HomePageClient({
   useEffect(() => {
     let cancelled = false;
 
+    // Nếu dữ liệu SSR đã được truyền sang, không cần re-fetch từ API khi client mount
+    if (initialMangaList.length > 0) {
+      setIsLoading(false);
+      return;
+    }
+
     const loadMangas = async () => {
       try {
-        if (initialMangaList.length === 0) {
-          setIsLoading(true);
-        }
+        setIsLoading(true);
 
         const response = await fetch("/api/mangas", {
           method: "GET",
@@ -128,7 +132,7 @@ export default function HomePageClient({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initialMangaList.length]);
 
   useEffect(() => {
     const checkLogin = async () => {
@@ -157,6 +161,11 @@ export default function HomePageClient({
   }, []);
 
   useEffect(() => {
+    // Nếu dữ liệu nhóm dịch SSR đã được truyền sang, không cần re-fetch khi client mount
+    if (initialTranslationGroups.length > 0) {
+      return;
+    }
+
     const loadTranslationGroups = async () => {
       try {
         const response = await fetch("/api/translation-groups", {
@@ -174,7 +183,7 @@ export default function HomePageClient({
     };
 
     void loadTranslationGroups();
-  }, []);
+  }, [initialTranslationGroups.length]);
 
   const filteredManga = mangaList.filter((manga) => {
     const keyword = search.trim().toLowerCase();

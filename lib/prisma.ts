@@ -6,8 +6,8 @@ import { env } from "cloudflare:workers";
 let clientInstance: PrismaClient | null = null;
 
 function getPrisma(): PrismaClient {
-  // Trong môi trường production, dùng Singleton Instance
-  if (process.env.NODE_ENV === "production" && clientInstance) {
+  // Nếu đã có instance trong V8 isolate này, dùng lại instance cũ
+  if (clientInstance) {
     return clientInstance;
   }
 
@@ -17,15 +17,11 @@ function getPrisma(): PrismaClient {
     );
   }
 
-  // Khởi tạo adapter từ binding hiện tại
+  // Khởi tạo adapter mới từ binding hiện tại
   const adapter = new PrismaD1(env.yoru_database);
-  const instance = new PrismaClient({ adapter });
+  clientInstance = new PrismaClient({ adapter });
 
-  if (process.env.NODE_ENV === "production") {
-    clientInstance = instance;
-  }
-
-  return instance;
+  return clientInstance;
 }
 
 // Proxy đóng vai trò làm wrapper giữ nguyên cú pháp gọi prisma.model.method

@@ -128,12 +128,16 @@ export async function GET(request: Request) {
           chapter: "asc",
         },
       ],
-      include: {
-        images: {
-          orderBy: {
-            order: "asc",
-          },
-        },
+      select: {
+        id: true,
+        mangaId: true,
+        volume: true,
+        chapter: true,
+        chapterType: true,
+        isH: true,
+        isEnd: true,
+        isLocked: true,
+        passwordHint: true,
       },
     });
 

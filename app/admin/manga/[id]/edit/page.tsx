@@ -261,8 +261,6 @@ const [translationGroupId, setTranslationGroupId] =
         router.push(
           `/admin/manga/${mangaId}`
         );
-
-        router.refresh();
       }, 700);
     } catch (err) {
       console.error(

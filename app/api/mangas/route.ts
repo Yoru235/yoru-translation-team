@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   try {
     const mangas = await prisma.manga.findMany({
+      take: 100,
       orderBy: [
         {
           views: "desc",

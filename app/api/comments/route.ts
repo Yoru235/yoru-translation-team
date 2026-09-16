@@ -83,10 +83,18 @@ export async function GET(request: Request) {
         },
       });
 
-    return NextResponse.json({
-      success: true,
-      comments,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        comments,
+      },
+      {
+        headers: {
+          "Cache-Control":
+            "public, max-age=10, s-maxage=30, stale-while-revalidate=120",
+        },
+      }
+    );
   } catch (error) {
     console.error(
       "GET COMMENTS ERROR:",
@@ -121,7 +129,7 @@ export async function POST(request: Request) {
     }
 
     const body =
-  (await request.json()) as any;
+      (await request.json()) as any;
 
     const content =
       typeof body.content === "string"

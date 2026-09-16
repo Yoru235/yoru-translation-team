@@ -8,6 +8,8 @@ import BookmarkButton from "@/components/BookmarkButton";
 import RatingStars from "@/app/components/RatingStars";
 import Comments from "@/components/Comments";
 
+export const revalidate = 60;
+
 type PageProps = {
   params: Promise<{
     mangaId: string;
@@ -61,17 +63,10 @@ export default async function MangaPage({
       id: mangaId,
     },
     include: {
-    translationGroup: true,
+      translationGroup: true,
       chapters: {
         orderBy: {
           chapter: "asc",
-        },
-        include: {
-          images: {
-            orderBy: {
-              order: "asc",
-            },
-          },
         },
       },
     },
@@ -80,16 +75,6 @@ export default async function MangaPage({
   if (!manga) {
     notFound();
   }
-  await prisma.manga.update({
-  where: {
-    id: manga.id,
-  },
-  data: {
-    views: {
-      increment: 1,
-    },
-  },
-});
 
   const cookieStore = await cookies();
 
@@ -337,7 +322,6 @@ if (manga.isLocked && !isMangaUnlocked) {
               >
 
                 <div>
-
                   <p className="font-bold text-gray-200">
   {chapter.volume !== null
     ? `Vol. ${chapter.volume} — Chapter ${chapter.chapter}`
@@ -355,11 +339,6 @@ if (manga.isLocked && !isMangaUnlocked) {
     </span>
   )}
 </p>
-
-                  <p className="mt-1 text-xs text-gray-500">
-                    {chapter.images.length} trang
-                  </p>
-
                 </div>
 
                 <span className="text-sm font-bold text-purple-400">

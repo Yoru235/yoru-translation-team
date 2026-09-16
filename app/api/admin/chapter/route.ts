@@ -77,74 +77,74 @@ export async function GET(request: Request) {
           { status: 404 }
         );
       }
-const cookieStore = await cookies();
+      const cookieStore = await cookies();
 
-const mangaUnlocked =
-  !!chapter.manga.passwordHash &&
-  cookieStore.get(
-    `manga-unlocked-${chapter.manga.id}`
-  )?.value ===
-    createUnlockToken(
-      chapter.manga.passwordHash
-    );
+      const mangaUnlocked =
+        !!chapter.manga.passwordHash &&
+        cookieStore.get(
+          `manga-unlocked-${chapter.manga.id}`
+        )?.value ===
+        createUnlockToken(
+          chapter.manga.passwordHash
+        );
 
-const chapterUnlocked =
-  !!chapter.passwordHash &&
-  cookieStore.get(
-    `chapter-unlocked-${chapter.id}`
-  )?.value ===
-    createUnlockToken(
-      chapter.passwordHash
-    );
+      const chapterUnlocked =
+        !!chapter.passwordHash &&
+        cookieStore.get(
+          `chapter-unlocked-${chapter.id}`
+        )?.value ===
+        createUnlockToken(
+          chapter.passwordHash
+        );
       // ==========================================
       // ĐỔI URL ẢNH SANG API BẢO VỆ
       // ==========================================
 
       let chapterContent = chapter.content;
 
-if (
-  chapter.chapterType === "Novel" &&
-  chapter.content
-) {
-  try {
-    const objectKey = chapter.content.replace(
-      /^\/uploads\//,
-      ""
-    );
+      if (
+        chapter.chapterType === "Novel" &&
+        chapter.content
+      ) {
+        try {
+          const objectKey = chapter.content.replace(
+            /^\/uploads\//,
+            ""
+          );
 
-    const novelObject =
-      env.UPLOADS ? await env.UPLOADS.get(objectKey) : null;
+          const novelObject =
+            env.UPLOADS ? await env.UPLOADS.get(objectKey) : null;
 
-    if (novelObject) {
-      chapterContent =
-        await novelObject.text();
-    }
-  } catch (error) {
-    console.error(
-      "LOAD NOVEL FROM R2 ERROR:",
-      error
-    );
-  }
-}
+          if (novelObject) {
+            chapterContent =
+              await novelObject.text();
+          }
+        } catch (error) {
+          console.error(
+            "LOAD NOVEL FROM R2 ERROR:",
+            error
+          );
+        }
+      }
 
-const protectedChapter = {
-  ...chapter,
+      const protectedChapter = {
+        ...chapter,
 
-  content: chapterContent,
+        content: chapterContent,
 
-  isLocked:
-    chapter.isLocked && !chapterUnlocked,
+        isLocked:
+          chapter.isLocked && !chapterUnlocked,
 
-  manga: {
-    ...chapter.manga,
+        manga: {
+          ...chapter.manga,
 
-    isLocked:
-      chapter.manga.isLocked &&
-      !mangaUnlocked,
-  },
+          isLocked:
+            chapter.manga.isLocked &&
+            !mangaUnlocked,
+        },
 
-  images: chapter.images,
-};
+        images: chapter.images,
+      };
 
       return NextResponse.json({
         success: true,
@@ -164,28 +164,28 @@ const protectedChapter = {
         orderBy: {
           chapter: "asc",
         },
-        include: {
-          images: {
-            orderBy: {
-              order: "asc",
+        select: {
+          id: true,
+          mangaId: true,
+          volume: true,
+          chapter: true,
+          chapterType: true,
+          isH: true,
+          isEnd: true,
+          isLocked: true,
+          passwordHint: true,
+          createdAt: true,
+          _count: {
+            select: {
+              images: true,
             },
           },
         },
       });
 
-    // ==========================================
-    // ĐỔI URL ẢNH SANG API BẢO VỆ
-    // ==========================================
-
-    const protectedChapters =
-  chapters.map((chapter) => ({
-    ...chapter,
-    images: chapter.images,
-  }));
-
     return NextResponse.json({
       success: true,
-      chapters: protectedChapters,
+      chapters,
     });
   } catch (error) {
     console.error(
@@ -225,26 +225,26 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json()) as {
-  mangaId?: string;
-  volume?: string | number | null;
-  chapter?: string | number | null;
-  images: unknown[];
-  isH?: boolean;
-  isEnd?: boolean;
-  chapterType?: string;
-  content?: string;
-};
+      mangaId?: string;
+      volume?: string | number | null;
+      chapter?: string | number | null;
+      images: unknown[];
+      isH?: boolean;
+      isEnd?: boolean;
+      chapterType?: string;
+      content?: string;
+    };
 
-const {
-  mangaId,
-  volume,
-  chapter,
-  images,
-  isH,
-  isEnd,
-  chapterType,
-  content,
-} = body;
+    const {
+      mangaId,
+      volume,
+      chapter,
+      images,
+      isH,
+      isEnd,
+      chapterType,
+      content,
+    } = body;
 
     // ================================
     // KIỂM TRA TRUYỆN
@@ -295,16 +295,16 @@ const {
     // ================================
 
     if (
-  chapterType !== "Novel" &&
-  (!Array.isArray(images) || images.length === 0)
-) {
-  return NextResponse.json(
-    {
-      error: "Chapter chưa có ảnh.",
-    },
-    { status: 400 }
-  );
-}
+      chapterType !== "Novel" &&
+      (!Array.isArray(images) || images.length === 0)
+    ) {
+      return NextResponse.json(
+        {
+          error: "Chapter chưa có ảnh.",
+        },
+        { status: 400 }
+      );
+    }
 
     // ================================
     // KIỂM TRA TRUYỆN CÓ TỒN TẠI
@@ -321,8 +321,8 @@ const {
 
     console.log("FINDING MANGA:", mangaId);
 
-const manga =
-  await prisma.manga.findUnique({
+    const manga =
+      await prisma.manga.findUnique({
         where: {
           id: mangaId,
         },
@@ -332,7 +332,7 @@ const manga =
           creditUrl: true,
         },
       });
-console.log("MANGA RESULT:", manga);
+    console.log("MANGA RESULT:", manga);
     if (!manga) {
       return NextResponse.json(
         {
@@ -341,14 +341,14 @@ console.log("MANGA RESULT:", manga);
         { status: 404 }
       );
     }
-console.log(
-  "MANGA CREDIT CHECK:",
-  {
-    id: manga.id,
-    title: manga.title,
-    creditUrl: manga.creditUrl,
-  }
-);
+    console.log(
+      "MANGA CREDIT CHECK:",
+      {
+        id: manga.id,
+        title: manga.title,
+        creditUrl: manga.creditUrl,
+      }
+    );
     // ================================
     // KIỂM TRA VOLUME
     // ================================
@@ -403,19 +403,19 @@ console.log(
 
       const imageUrl =
         "imageUrl" in image &&
-        typeof image.imageUrl === "string"
+          typeof image.imageUrl === "string"
           ? image.imageUrl
           : undefined;
 
       const fileName =
         "fileName" in image &&
-        typeof image.fileName === "string"
+          typeof image.fileName === "string"
           ? image.fileName
           : undefined;
 
       const imageOrder =
         "order" in image &&
-        typeof image.order === "number"
+          typeof image.order === "number"
           ? image.order
           : index + 1;
 
@@ -435,9 +435,9 @@ console.log(
     // ================================
 
     if (
-  chapterType !== "Novel" &&
-  validImages.length === 0
-) {
+      chapterType !== "Novel" &&
+      validImages.length === 0
+    ) {
       return NextResponse.json(
         {
           error: "Không có ảnh hợp lệ.",
@@ -446,18 +446,18 @@ console.log(
       );
     }
     if (
-  chapterType === "Novel" &&
-  !content?.trim() &&
-  validImages.length === 0
-) {
-  return NextResponse.json(
-    {
-      error:
-        "Novel cần có nội dung hoặc ít nhất một ảnh.",
-    },
-    { status: 400 }
-  );
-}
+      chapterType === "Novel" &&
+      !content?.trim() &&
+      validImages.length === 0
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Novel cần có nội dung hoặc ít nhất một ảnh.",
+        },
+        { status: 400 }
+      );
+    }
 
     // ================================
     // SẮP XẾP ẢNH THEO ORDER
@@ -468,49 +468,49 @@ console.log(
     );
 
 
-// ================================
-// UPLOAD NỘI DUNG NOVEL LÊN R2
-// ================================
+    // ================================
+    // UPLOAD NỘI DUNG NOVEL LÊN R2
+    // ================================
 
-let novelContentKey: string | null = null;
+    let novelContentKey: string | null = null;
 
-if (
-  chapterType === "Novel" &&
-  typeof content === "string" &&
-  content.trim()
-) {
-  const fileName =
-    `novels/${manga.id}/${Date.now()}-chapter-${chapterNumber}.txt`;
+    if (
+      chapterType === "Novel" &&
+      typeof content === "string" &&
+      content.trim()
+    ) {
+      const fileName =
+        `novels/${manga.id}/${Date.now()}-chapter-${chapterNumber}.txt`;
 
-  await env.UPLOADS.put(
-    fileName,
-    content.trim(),
-    {
-      httpMetadata: {
-        contentType:
-          "text/plain; charset=utf-8",
-      },
+      await env.UPLOADS.put(
+        fileName,
+        content.trim(),
+        {
+          httpMetadata: {
+            contentType:
+              "text/plain; charset=utf-8",
+          },
+        }
+      );
+
+      novelContentKey =
+        `/uploads/${fileName}`;
     }
-  );
-
-  novelContentKey =
-    `/uploads/${fileName}`;
-}
     // ================================
     // TẠO CHAPTER + ẢNH
     // ================================
-console.log(
-  "CREATING CHAPTER...",
-  {
-    mangaId: manga.id,
-    chapter: chapterNumber,
-    imageCount: validImages.length,
-    chapterType,
-  }
-);
+    console.log(
+      "CREATING CHAPTER...",
+      {
+        mangaId: manga.id,
+        chapter: chapterNumber,
+        imageCount: validImages.length,
+        chapterType,
+      }
+    );
 
-const newChapter =
-  await prisma.chapter.create({
+    const newChapter =
+      await prisma.chapter.create({
         data: {
           mangaId: manga.id,
 
@@ -518,12 +518,12 @@ const newChapter =
 
           chapter: chapterNumber,
           chapterType:
-  typeof chapterType === "string" &&
-  chapterType.trim()
-    ? chapterType.trim()
-    : "Manga",
+            typeof chapterType === "string" &&
+              chapterType.trim()
+              ? chapterType.trim()
+              : "Manga",
 
-content: novelContentKey,
+          content: novelContentKey,
           isH: Boolean(isH),
           isEnd: Boolean(isEnd),
 
@@ -556,7 +556,7 @@ content: novelContentKey,
         success: true,
 
         message:
-  "Upload chapter thành công.",
+          "Upload chapter thành công.",
 
         chapter: newChapter,
 
@@ -621,18 +621,18 @@ export async function PUT(request: Request) {
     // ==========================================
 
     const body = (await request.json()) as {
-  chapter?: string | number | null;
-  volume?: string | number | null;
-  isH?: boolean;
-  isEnd?: boolean;
-};
+      chapter?: string | number | null;
+      volume?: string | number | null;
+      isH?: boolean;
+      isEnd?: boolean;
+    };
 
-const {
-  chapter,
-  volume,
-  isH,
-  isEnd,
-} = body;
+    const {
+      chapter,
+      volume,
+      isH,
+      isEnd,
+    } = body;
 
     // ==========================================
     // KIỂM TRA CHAPTER
@@ -824,15 +824,15 @@ export async function DELETE(request: Request) {
     // ==========================================
 
     for (const image of existingChapter.images) {
-  const imageUrl = image.imageUrl;
+      const imageUrl = image.imageUrl;
 
-  if (imageUrl.startsWith("/uploads/")) {
-    const objectKey =
-      imageUrl.replace("/uploads/", "");
+      if (imageUrl.startsWith("/uploads/")) {
+        const objectKey =
+          imageUrl.replace("/uploads/", "");
 
-    await env.UPLOADS.delete(objectKey);
-  }
-}
+        await env.UPLOADS.delete(objectKey);
+      }
+    }
 
     // ==========================================
     // XÓA ẢNH KHỎI DATABASE
