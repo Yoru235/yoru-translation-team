@@ -60,59 +60,59 @@ export async function GET(request: Request) {
           { status: 404 }
         );
       }
-const cookieStore = await cookies();
+      const cookieStore = await cookies();
 
-const mangaUnlocked =
-  chapter.manga.isLocked &&
-  !!chapter.manga.passwordHash &&
-  cookieStore.get(
-    `manga-unlocked-${chapter.manga.id}`
-  )?.value ===
-    createUnlockToken(chapter.manga.passwordHash);
+      const mangaUnlocked =
+        chapter.manga.isLocked &&
+        !!chapter.manga.passwordHash &&
+        cookieStore.get(
+          `manga-unlocked-${chapter.manga.id}`
+        )?.value ===
+        createUnlockToken(chapter.manga.passwordHash);
 
-const chapterUnlocked =
-  chapter.isLocked &&
-  !!chapter.passwordHash &&
-  cookieStore.get(
-    `chapter-unlocked-${chapter.id}`
-  )?.value ===
-    createUnlockToken(chapter.passwordHash);
+      const chapterUnlocked =
+        chapter.isLocked &&
+        !!chapter.passwordHash &&
+        cookieStore.get(
+          `chapter-unlocked-${chapter.id}`
+        )?.value ===
+        createUnlockToken(chapter.passwordHash);
       let chapterContent = chapter.content;
 
-if (
-  chapter.chapterType === "Novel" &&
-  chapter.content
-) {
-  try {
-    const objectKey = chapter.content.replace(
-      /^\/uploads\//,
-      ""
-    );
+      if (
+        chapter.chapterType === "Novel" &&
+        chapter.content
+      ) {
+        try {
+          const objectKey = chapter.content.replace(
+            /^\/uploads\//,
+            ""
+          );
 
-    const novelObject =
-      await env.UPLOADS.get(objectKey);
+          const novelObject =
+            env.UPLOADS ? await env.UPLOADS.get(objectKey) : null;
 
-    if (novelObject) {
-      chapterContent =
-        await novelObject.text();
-    }
-  } catch (error) {
-    console.error(
-      "LOAD NOVEL FROM R2 ERROR:",
-      error
-    );
-  }
-}
+          if (novelObject) {
+            chapterContent =
+              await novelObject.text();
+          }
+        } catch (error) {
+          console.error(
+            "LOAD NOVEL FROM R2 ERROR:",
+            error
+          );
+        }
+      }
 
-const protectedChapter = {
-  ...chapter,
-  content: chapterContent,
-};
+      const protectedChapter = {
+        ...chapter,
+        content: chapterContent,
+      };
 
-return NextResponse.json({
-  success: true,
-  chapter: protectedChapter,
-});
+      return NextResponse.json({
+        success: true,
+        chapter: protectedChapter,
+      });
     }
 
     // ==========================================
@@ -128,12 +128,16 @@ return NextResponse.json({
           chapter: "asc",
         },
       ],
-      include: {
-        images: {
-          orderBy: {
-            order: "asc",
-          },
-        },
+      select: {
+        id: true,
+        mangaId: true,
+        volume: true,
+        chapter: true,
+        chapterType: true,
+        isH: true,
+        isEnd: true,
+        isLocked: true,
+        passwordHint: true,
       },
     });
 

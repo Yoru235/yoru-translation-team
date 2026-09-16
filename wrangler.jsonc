@@ -3,9 +3,9 @@
   "name": "yoru-translation-team",
   "compatibility_date": "2026-09-05",
   "compatibility_flags": [
-  "nodejs_compat",
-  "no_handle_cross_request_promise_resolution"
-],
+    "nodejs_compat",
+    "no_handle_cross_request_promise_resolution"
+  ],
   "main": "vinext/server/fetch-handler",
   "assets": {
     "directory": "dist/client",
@@ -29,13 +29,13 @@
     }
   ],
   "d1_databases": [
-  {
-    "binding": "yoru_database",
-    "database_name": "yoru-database",
-    "database_id": "63377740-41f3-44e6-a9ef-86d21ec32a01",
-    "remote": true
-  }],
-  
+    {
+      "binding": "yoru_database",
+      "database_name": "yoru-database",
+      "database_id": "63377740-41f3-44e6-a9ef-86d21ec32a01",
+      "remote": true // tắt để thực hiện chỉnh sửa db ở local
+    }
+  ],
   "observability": {
     "logs": {
       "enabled": true,
@@ -49,6 +49,4 @@
       "persist": true
     }
   }
-  
-
 }

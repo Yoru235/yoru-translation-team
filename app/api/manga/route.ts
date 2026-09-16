@@ -56,40 +56,48 @@ export async function GET(request: Request) {
     ========================= */
 
     const mangas = await prisma.manga.findMany({
-  orderBy: {
-    updatedAt: "desc",
-  },
-  select: {
-    id: true,
-    title: true,
-    originalTitle: true,
-    author: true,
-    releaseDate: true,
-    description: true,
-    type: true,
-    status: true,
-    ageRestricted: true,
-    coverUrl: true,
-    creditUrl: true,
-    genres: true,
-    chapters: {
+      orderBy: {
+        updatedAt: "desc",
+      },
       select: {
         id: true,
-        chapter: true,
-        volume: true,
+        title: true,
+        originalTitle: true,
+        author: true,
+        releaseDate: true,
+        description: true,
+        type: true,
+        status: true,
+        ageRestricted: true,
+        coverUrl: true,
+        creditUrl: true,
+        genres: true,
+        chapters: {
+          select: {
+            id: true,
+            chapter: true,
+            volume: true,
+          },
+          orderBy: {
+            chapter: "desc",
+          },
+          take: 1,
+        },
       },
-      orderBy: {
-        chapter: "desc",
-      },
-      take: 1,
-    },
-  },
-});
-
-    return NextResponse.json({
-      success: true,
-      mangas,
     });
+
+    return NextResponse.json(
+      {
+        success: true,
+        mangas,
+      },
+      {
+        headers: {
+          "Cache-Control":
+            "public, max-age=60, s-maxage=300, stale-while-revalidate=3600",
+        },
+      }
+    );
   } catch (error) {
     console.error("GET MANGA ERROR:", error);
 
@@ -154,9 +162,9 @@ export async function POST(request: Request) {
 
     const genres = Array.isArray(body.genres)
       ? body.genres.filter(
-          (genre: unknown) =>
-            typeof genre === "string"
-        )
+        (genre: unknown) =>
+          typeof genre === "string"
+      )
       : [];
 
     const coverUrl =
@@ -174,31 +182,31 @@ export async function POST(request: Request) {
     ========================= */
 
     const author =
-  typeof body.author === "string"
-    ? body.author.trim() || null
-    : null;
+      typeof body.author === "string"
+        ? body.author.trim() || null
+        : null;
 
-const releaseDate =
-  typeof body.releaseDate === "string" &&
-  body.releaseDate
-    ? new Date(body.releaseDate)
-    : null;
+    const releaseDate =
+      typeof body.releaseDate === "string" &&
+        body.releaseDate
+        ? new Date(body.releaseDate)
+        : null;
 
-const manga = await prisma.manga.create({
-  data: {
-    title,
-    originalTitle,
-    author,
-    releaseDate,
-    description,
-    type,
-    status,
-    ageRestricted,
-    genres,
-    coverUrl,
-    creditUrl,
-  },
-});
+    const manga = await prisma.manga.create({
+      data: {
+        title,
+        originalTitle,
+        author,
+        releaseDate,
+        description,
+        type,
+        status,
+        ageRestricted,
+        genres,
+        coverUrl,
+        creditUrl,
+      },
+    });
 
     return NextResponse.json(
       {
@@ -280,16 +288,16 @@ export async function PUT(request: Request) {
 
           originalTitle:
             typeof body.originalTitle ===
-            "string"
+              "string"
               ? body.originalTitle.trim() ||
-                null
+              null
               : existingManga.originalTitle,
 
           description:
             typeof body.description ===
-            "string"
+              "string"
               ? body.description.trim() ||
-                null
+              null
               : existingManga.description,
 
           type:
@@ -304,7 +312,7 @@ export async function PUT(request: Request) {
 
           ageRestricted:
             typeof body.ageRestricted ===
-            "boolean"
+              "boolean"
               ? body.ageRestricted
               : existingManga.ageRestricted,
 
@@ -321,9 +329,9 @@ export async function PUT(request: Request) {
           genres:
             Array.isArray(body.genres)
               ? body.genres.filter(
-                  (genre: unknown) =>
-                    typeof genre === "string"
-                )
+                (genre: unknown) =>
+                  typeof genre === "string"
+              )
               : existingManga.genres,
         },
       });

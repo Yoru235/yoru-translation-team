@@ -12,6 +12,7 @@ export const revalidate = 60;
 
 type PageProps = {
   params: Promise<{
+    type: string;
     mangaId: string;
   }>;
 };
@@ -21,8 +22,10 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { mangaId } = await params;
 
-  const manga = await prisma.manga.findUnique({
-    where: { id: mangaId },
+  const manga = await prisma.manga.findFirst({
+    where: {
+      OR: [{ id: mangaId }],
+    },
     select: {
       title: true,
       description: true,
@@ -53,14 +56,12 @@ export async function generateMetadata({
   };
 }
 
-export default async function MangaPage({
-  params,
-}: PageProps) {
+export default async function MangaPage({ params }: PageProps) {
   const { mangaId } = await params;
 
-  const manga = await prisma.manga.findUnique({
+  const manga = await prisma.manga.findFirst({
     where: {
-      id: mangaId,
+      OR: [{ id: mangaId }],
     },
     include: {
       translationGroup: true,
@@ -78,48 +79,36 @@ export default async function MangaPage({
 
   const cookieStore = await cookies();
 
-const unlockCookie = cookieStore.get(
-  `manga_unlocked_${manga.id}`
-);
+  const unlockCookie = cookieStore.get(`manga_unlocked_${manga.id}`);
 
-const isMangaUnlocked =
-  unlockCookie?.value === "true";
+  const isMangaUnlocked = unlockCookie?.value === "true";
 
-if (manga.isLocked && !isMangaUnlocked) {
-  return (
-    <MangaLockGate
-      mangaId={manga.id}
-      title={manga.title}
-      passwordHint={manga.passwordHint}
-    />
-  );
-}
+  if (manga.isLocked && !isMangaUnlocked) {
+    return (
+      <MangaLockGate
+        mangaId={manga.id}
+        title={manga.title}
+        passwordHint={manga.passwordHint}
+      />
+    );
+  }
+
   return (
     <main className="min-h-screen bg-black text-white">
-
       {/* HEADER */}
-
       <header className="sticky top-0 z-50 border-b border-gray-800 bg-black/95 backdrop-blur">
         <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-4 px-4">
-
-          <Link
-            href="/"
-            className="flex items-center gap-3"
-          >
+          <Link href="/" className="flex items-center gap-3">
             <img
               src="/logo.png"
               alt="Yoru Translation Group"
               className="h-10 w-auto object-contain"
             />
-
             <div className="hidden sm:block">
               <p className="font-extrabold text-white">
                 Yoru Translation Group
               </p>
-
-              <p className="text-xs text-gray-500">
-                Đọc truyện
-              </p>
+              <p className="text-xs text-gray-500">Đọc truyện</p>
             </div>
           </Link>
 
@@ -129,21 +118,15 @@ if (manga.isLocked && !isMangaUnlocked) {
           >
             ← Trang chủ
           </Link>
-
         </div>
       </header>
 
       {/* THÔNG TIN TRUYỆN */}
-
       <section className="border-b border-gray-900 bg-[#080808]">
         <div className="mx-auto max-w-5xl px-4 py-10">
-
           <div className="flex flex-col gap-8 md:flex-row">
-
             {/* COVER */}
-
             <div className="shrink-0 md:w-64">
-
               {manga.coverUrl ? (
                 <img
                   src={manga.coverUrl}
@@ -155,13 +138,10 @@ if (manga.isLocked && !isMangaUnlocked) {
                   Chưa có ảnh bìa
                 </div>
               )}
-
             </div>
 
             {/* INFO */}
-
             <div className="flex-1">
-
               <p className="text-sm font-semibold text-purple-400">
                 {manga.type}
               </p>
@@ -176,74 +156,69 @@ if (manga.isLocked && !isMangaUnlocked) {
                 </p>
               )}
 
-{manga.author && (
-  <p className="mt-3 text-sm text-gray-400">
-    <span className="font-semibold text-gray-500">
-      Tác giả:
-    </span>{" "}
-    {manga.author}
-  </p>
-)}
-<div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {manga.author && (
+                <p className="mt-3 text-sm text-gray-400">
+                  <span className="font-semibold text-gray-500">Tác giả:</span>{" "}
+                  {manga.author}
+                </p>
+              )}
 
-  {manga.translationGroup && (
-    <div className="rounded-xl border border-gray-800 bg-[#111111] px-4 py-3">
-      <p className="text-xs font-semibold text-gray-500">
-        Nhóm dịch
-      </p>
-      <p className="mt-1 font-semibold text-purple-400">
-        {manga.translationGroup.name}
-      </p>
-    </div>
-  )}
+              <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {manga.translationGroup && (
+                  <div className="rounded-xl border border-gray-800 bg-[#111111] px-4 py-3">
+                    <p className="text-xs font-semibold text-gray-500">
+                      Nhóm dịch
+                    </p>
+                    <p className="mt-1 font-semibold text-purple-400">
+                      {manga.translationGroup.name}
+                    </p>
+                  </div>
+                )}
 
-  {manga.releaseDate && (
-    <div className="rounded-xl border border-gray-800 bg-[#111111] px-4 py-3">
-      <p className="text-xs font-semibold text-gray-500">
-        Ngày phát hành
-      </p>
-      <p className="mt-1 font-semibold text-gray-200">
-        {new Date(manga.releaseDate).toLocaleDateString("vi-VN")}
-      </p>
-    </div>
-  )}
+                {manga.releaseDate && (
+                  <div className="rounded-xl border border-gray-800 bg-[#111111] px-4 py-3">
+                    <p className="text-xs font-semibold text-gray-500">
+                      Ngày phát hành
+                    </p>
+                    <p className="mt-1 font-semibold text-gray-200">
+                      {new Date(manga.releaseDate).toLocaleDateString("vi-VN")}
+                    </p>
+                  </div>
+                )}
 
-  <div className="rounded-xl border border-gray-800 bg-[#111111] px-4 py-3">
-    <p className="text-xs font-semibold text-gray-500">
-      Lượt xem
-    </p>
-    <p className="mt-1 font-semibold text-gray-200">
-      {manga.views.toLocaleString("vi-VN")}
-    </p>
-  </div>
+                <div className="rounded-xl border border-gray-800 bg-[#111111] px-4 py-3">
+                  <p className="text-xs font-semibold text-gray-500">
+                    Lượt xem
+                  </p>
+                  <p className="mt-1 font-semibold text-gray-200">
+                    {manga.views.toLocaleString("vi-VN")}
+                  </p>
+                </div>
 
-  <div className="rounded-xl border border-gray-800 bg-[#111111] px-4 py-3">
-  <RatingStars
-    mangaId={manga.id}
-    initialRating={manga.rating}
-  />
-</div>
+                <div className="rounded-xl border border-gray-800 bg-[#111111] px-4 py-3">
+                  <RatingStars
+                    mangaId={manga.id}
+                    initialRating={manga.rating}
+                  />
+                </div>
+              </div>
 
-</div>
-             <div className="mt-5 flex flex-wrap gap-2">
+              <div className="mt-5 flex flex-wrap gap-2">
+                <span className="rounded-full bg-purple-900/50 px-3 py-1 text-sm text-purple-200">
+                  {manga.status}
+                </span>
 
-  <span className="rounded-full bg-purple-900/50 px-3 py-1 text-sm text-purple-200">
-    {manga.status}
-  </span>
+                {Array.isArray(manga.genres) &&
+                  manga.genres.map((genre: unknown, index: number) => (
+                    <span
+                      key={index}
+                      className="rounded-full bg-[#171717] px-3 py-1 text-sm text-gray-300"
+                    >
+                      {typeof genre === "string" ? genre : ""}
+                    </span>
+                  ))}
+              </div>
 
-  {Array.isArray(manga.genres) &&
-    manga.genres.map((genre: unknown, index: number) => (
-      <span
-        key={index}
-        className="rounded-full bg-[#171717] px-3 py-1 text-sm text-gray-300"
-      >
-        {typeof genre === "string"
-          ? genre
-          : ""}
-      </span>
-    ))}
-
-</div>
               {manga.description && (
                 <p className="mt-6 whitespace-pre-line leading-7 text-gray-300">
                   {manga.description}
@@ -251,7 +226,6 @@ if (manga.isLocked && !isMangaUnlocked) {
               )}
 
               <div className="mt-6 flex flex-wrap gap-3">
-
                 {manga.chapters.length > 0 && (
                   <Link
                     href={`/chapter/${manga.chapters[0].id}`}
@@ -260,7 +234,9 @@ if (manga.isLocked && !isMangaUnlocked) {
                     Đọc từ đầu →
                   </Link>
                 )}
-<BookmarkButton mangaId={manga.id} />
+
+                <BookmarkButton mangaId={manga.id} />
+
                 {manga.creditUrl && (
                   <a
                     href={manga.creditUrl}
@@ -271,109 +247,73 @@ if (manga.isLocked && !isMangaUnlocked) {
                     Nguồn truyện
                   </a>
                 )}
-
               </div>
-
             </div>
-
           </div>
-
         </div>
       </section>
 
       {/* DANH SÁCH CHAPTER */}
-
       <section className="mx-auto max-w-5xl px-4 py-10">
-
         <div className="mb-6">
-
           <h2 className="text-2xl font-extrabold text-white">
             Danh sách chapter
           </h2>
-
           <div className="mt-3 h-1 w-20 rounded-full bg-gradient-to-r from-purple-600 to-pink-500" />
-
         </div>
 
         {manga.chapters.length === 0 ? (
-
           <div className="rounded-2xl border border-gray-800 bg-[#0d0d0d] p-10 text-center">
-
-            <p className="text-lg font-bold text-gray-300">
-              Chưa có chapter.
-            </p>
-
+            <p className="text-lg font-bold text-gray-300">Chưa có chapter.</p>
             <p className="mt-2 text-sm text-gray-600">
               Truyện này chưa được đăng chapter nào.
             </p>
-
           </div>
-
         ) : (
-
           <div className="space-y-3">
-
             {manga.chapters.map((chapter) => (
-
               <Link
                 key={chapter.id}
                 href={`/chapter/${chapter.id}`}
                 className="flex items-center justify-between rounded-xl border border-gray-800 bg-[#111111] px-5 py-4 transition hover:border-purple-600 hover:bg-purple-950/30"
               >
-
                 <div>
                   <p className="font-bold text-gray-200">
-  {chapter.volume !== null
-    ? `Vol. ${chapter.volume} — Chapter ${chapter.chapter}`
-    : `Chapter ${chapter.chapter}`}
+                    {chapter.volume !== null
+                      ? `Vol. ${chapter.volume} — Chapter ${chapter.chapter}`
+                      : `Chapter ${chapter.chapter}`}
 
-  {chapter.isH && (
-    <span className="ml-2 text-purple-400">
-      - H
-    </span>
-  )}
+                    {chapter.isH && (
+                      <span className="ml-2 text-purple-400">- H</span>
+                    )}
 
-  {chapter.isEnd && (
-    <span className="ml-2 text-pink-400">
-      - END
-    </span>
-  )}
-</p>
+                    {chapter.isEnd && (
+                      <span className="ml-2 text-pink-400">- END</span>
+                    )}
+                  </p>
                 </div>
 
                 <span className="text-sm font-bold text-purple-400">
                   Đọc →
                 </span>
-
               </Link>
-
             ))}
-
           </div>
-
         )}
-
       </section>
-            {/* COMMENTS */}
 
+      {/* COMMENTS */}
       <section className="mx-auto max-w-5xl px-4 pb-10">
         <Comments mangaId={manga.id} />
       </section>
 
       {/* FOOTER */}
-
       <footer className="border-t border-gray-900 bg-black px-6 py-8 text-center">
-
-        <p className="font-semibold text-gray-300">
-          Yoru Translation Group
-        </p>
-
+        <p className="font-semibold text-gray-300">Yoru Translation Group</p>
         <p className="mt-1 text-xs text-gray-600">
           © 2026 Yoru Translation Group
         </p>
-
       </footer>
-
     </main>
   );
 }

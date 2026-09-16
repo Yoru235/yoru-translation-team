@@ -238,8 +238,6 @@ const data = (await response.json()) as any;
         "/admin/manga"
       );
 
-      router.refresh();
-
     } catch (err) {
       console.error(
         "CREATE MANGA ERROR:",

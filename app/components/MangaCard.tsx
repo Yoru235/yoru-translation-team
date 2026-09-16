@@ -1,24 +1,29 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { getMangaUrl } from "@/lib/manga-url";
 
 type MangaCardProps = {
   id: string;
   title: string;
   coverUrl: string | null;
+  type?: string | null;
+  slug?: string | null;
 };
 
 export default function MangaCard({
   id,
   title,
   coverUrl,
+  type,
+  slug,
 }: MangaCardProps) {
   const router = useRouter();
 
   return (
     <button
       type="button"
-      onClick={() => router.push(`/manga/${id}`)}
+      onClick={() => router.push(getMangaUrl({ id, type, slug }))}
       className="group w-full text-left"
     >
       <div className="aspect-[2/3] overflow-hidden rounded-xl bg-gray-200 shadow-sm">

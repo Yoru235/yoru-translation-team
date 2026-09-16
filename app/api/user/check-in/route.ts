@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export async function POST(request: Request) {
   try {
-    // TODO: lấy user đang đăng nhập
-    // Tạm thời lấy userId từ header để test API
-    const userId = request.headers.get("x-user-id");
+    const currentUser = await getCurrentUser();
 
-    if (!userId) {
+    if (!currentUser) {
       return NextResponse.json(
         {
           success: false,
@@ -16,6 +15,8 @@ export async function POST(request: Request) {
         { status: 401 }
       );
     }
+
+    const userId = currentUser.id;
 
     // Kiểm tra user
     const user = await prisma.user.findUnique({

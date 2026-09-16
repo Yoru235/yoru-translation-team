@@ -1,66 +1,95 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
+import { getCurrentUser } from "@/lib/auth/session";
+import { prisma } from "@/lib/prisma";
 
-type HistoryItem = {
-  id: string;
-  readAt: string;
-  manga: {
-    id: string;
-    title: string;
-    coverUrl: string | null;
-    type: string;
-    status: string;
-  };
-  chapter: {
-    id: string;
-    chapter: number;
-    volume: number | null;
-  };
+export const metadata: Metadata = {
+  title: "Lịch sử đọc - Yoru Translation Group",
+  description: "Các chapter bạn đã đọc gần đây tại Yoru Translation Group.",
 };
 
-export default function HistoryPage() {
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+export default async function HistoryPage() {
+  const user = await getCurrentUser();
 
-  useEffect(() => {
-    const loadHistory = async () => {
-      try {
-        setIsLoading(true);
-        setError("");
+  if (!user) {
+    return (
+      <main className="min-h-screen bg-gray-50 px-4 py-8">
+        <div className="mx-auto max-w-5xl">
+          <div className="rounded-xl bg-white p-10 text-center shadow-sm">
+            <div className="mb-3 text-5xl">🔒</div>
 
-        const response = await fetch("/api/history", {
-          method: "GET",
-          cache: "no-store",
-        });
+            <h2 className="text-xl font-semibold text-gray-800">
+              Cần đăng nhập
+            </h2>
 
-        const data = (await response.json()) as any;
+            <p className="mt-2 text-gray-500">
+              Bạn cần đăng nhập để xem lịch sử đọc của mình.
+            </p>
 
-        if (!response.ok || !data.success) {
-          throw new Error(
-            data.error || "Không thể tải lịch sử đọc."
-          );
-        }
+            <Link
+              href="/login"
+              className="mt-6 inline-block rounded-lg bg-black px-5 py-2.5 text-white transition hover:opacity-80"
+            >
+              Đăng nhập
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
-        setHistory(data.history || []);
-      } catch (error) {
-        console.error("LOAD HISTORY ERROR:", error);
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Không thể tải lịch sử đọc."
-        );
-      } finally {
-        setIsLoading(false);
-      }
+  let history: Array<{
+    id: string;
+    readAt: Date;
+    manga: {
+      id: string;
+      title: string;
+      coverUrl: string | null;
+      type: string;
+      status: string;
     };
+    chapter: {
+      id: string;
+      chapter: number;
+      volume: number | null;
+    };
+  }> = [];
 
-    loadHistory();
-  }, []);
+  let error = "";
 
-  const formatDate = (date: string) => {
+  try {
+    history = await prisma.readingHistory.findMany({
+      where: {
+        userId: user.id,
+      },
+      include: {
+        manga: {
+          select: {
+            id: true,
+            title: true,
+            coverUrl: true,
+            type: true,
+            status: true,
+          },
+        },
+        chapter: {
+          select: {
+            id: true,
+            chapter: true,
+            volume: true,
+          },
+        },
+      },
+      orderBy: {
+        readAt: "desc",
+      },
+    });
+  } catch (err) {
+    console.error("SSR LOAD HISTORY ERROR:", err);
+    error = "Không thể tải lịch sử đọc.";
+  }
+
+  const formatDate = (date: Date) => {
     return new Date(date).toLocaleString("vi-VN", {
       day: "2-digit",
       month: "2-digit",
@@ -74,30 +103,20 @@ export default function HistoryPage() {
     <main className="min-h-screen bg-gray-50 px-4 py-8">
       <div className="mx-auto max-w-5xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-             Lịch sử đọc
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900">📖 Lịch sử đọc</h1>
 
           <p className="mt-2 text-gray-500">
             Những chapter bạn đã đọc gần đây.
           </p>
         </div>
 
-        {isLoading && (
-          <div className="rounded-xl bg-white p-8 text-center shadow-sm">
-            <p className="text-gray-500">
-              Đang tải lịch sử đọc...
-            </p>
-          </div>
-        )}
-
-        {!isLoading && error && (
+        {error && (
           <div className="rounded-xl bg-white p-8 text-center shadow-sm">
             <p className="text-red-500">{error}</p>
           </div>
         )}
 
-        {!isLoading && !error && history.length === 0 && (
+        {!error && history.length === 0 && (
           <div className="rounded-xl bg-white p-10 text-center shadow-sm">
             <div className="mb-3 text-5xl">📖</div>
 
@@ -118,7 +137,7 @@ export default function HistoryPage() {
           </div>
         )}
 
-        {!isLoading && !error && history.length > 0 && (
+        {!error && history.length > 0 && (
           <div className="space-y-4">
             {history.map((item) => (
               <div
@@ -133,9 +152,7 @@ export default function HistoryPage() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-2xl">
-                      
-                    </div>
+                    <div className="flex h-full w-full items-center justify-center text-2xl" />
                   )}
                 </div>
 

@@ -69,20 +69,32 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
 
   // Session hết hạn
   if (session.expiresAt < new Date()) {
-    await prisma.session.delete({
-      where: {
-        id: session.id,
-      },
-    });
+    try {
+      await prisma.session.delete({
+        where: {
+          id: session.id,
+        },
+      });
+    } catch (e) {
+      console.error("DELETE EXPIRED SESSION ERROR:", e);
+    }
 
-    cookieStore.delete(SESSION_COOKIE);
+    try {
+      cookieStore.delete(SESSION_COOKIE);
+    } catch {
+      // Bỏ qua lỗi trong Server Component không cho phép mutate cookie
+    }
 
     return null;
   }
 
   // Tài khoản bị khóa
   if (!session.user.isActive) {
-    cookieStore.delete(SESSION_COOKIE);
+    try {
+      cookieStore.delete(SESSION_COOKIE);
+    } catch {
+      // Bỏ qua lỗi trong Server Component
+    }
 
     return null;
   }

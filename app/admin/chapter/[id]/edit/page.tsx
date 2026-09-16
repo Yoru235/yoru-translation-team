@@ -66,7 +66,7 @@ export default function EditChapterPage() {
         ) {
           throw new Error(
             data.error ||
-              "Không thể tải thông tin chapter."
+            "Không thể tải thông tin chapter."
           );
         }
 
@@ -180,7 +180,7 @@ export default function EditChapterPage() {
       ) {
         throw new Error(
           data.error ||
-            "Không thể lưu chapter."
+          "Không thể lưu chapter."
         );
       }
 
@@ -196,8 +196,6 @@ export default function EditChapterPage() {
         } else {
           router.back();
         }
-
-        router.refresh();
       }, 700);
     } catch (err) {
       console.error(

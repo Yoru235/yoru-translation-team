@@ -83,6 +83,8 @@ const genres: Genre[] = [
   { id: "Marriage first, love later", name: "Cưới trước yêu sau" },
   { id: "Ancient times", name: "Thời âu cổ" },
   { id: "ABO", name: "ABO" },
+  { id: "Mpreg", name: "Nam mang thai" },
+  { id: "Cuntboy", name: "Trôn có lài" },
 ];
 
 /* =========================================================
