@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { recordMangaView } from "@/lib/views";
 
 export async function POST(request: Request) {
   try {
@@ -36,11 +37,7 @@ export async function POST(request: Request) {
       );
     }
 
-    await prisma.mangaView.create({
-      data: {
-        mangaId: manga.id,
-      },
-    });
+    await recordMangaView(manga.id);
 
     return NextResponse.json({
       success: true,

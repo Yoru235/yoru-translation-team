@@ -51,14 +51,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Lấy ngày hiện tại
-    const now = new Date();
+    // Lấy ngày hiện tại theo giờ Việt Nam (Asia/Ho_Chi_Minh)
+    const vnDateStr = new Date().toLocaleDateString("en-CA", {
+      timeZone: "Asia/Ho_Chi_Minh",
+    });
 
-    const startOfDay = new Date(now);
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(now);
-    endOfDay.setHours(23, 59, 59, 999);
+    const startOfDay = new Date(`${vnDateStr}T00:00:00+07:00`);
+    const endOfDay = new Date(`${vnDateStr}T23:59:59.999+07:00`);
 
     // Kiểm tra hôm nay đã điểm danh chưa
     const existingCheckIn =

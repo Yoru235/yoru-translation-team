@@ -8,6 +8,7 @@ import { createUnlockToken } from "@/lib/auth/unlock-token";
 import { env } from "cloudflare:workers";
 import Comments from "@/components/Comments";
 import ChapterLockGate from "@/components/ChapterLockGate";
+import ReadingTracker from "@/components/ReadingTracker";
 
 type PageProps = {
   params: Promise<{
@@ -183,12 +184,16 @@ export default async function ChapterReaderPage({ params }: PageProps) {
     ) {
       try {
         const objectKey = chapter.content.replace(/^\/?uploads\//, "");
-        const novelObject = env.UPLOADS
-          ? await env.UPLOADS.get(objectKey)
-          : null;
+        if (env.UPLOADS) {
+          const timeoutPromise = new Promise<null>((resolve) =>
+            setTimeout(() => resolve(null), 3000)
+          );
+          const getPromise = env.UPLOADS.get(objectKey);
+          const novelObject = await Promise.race([getPromise, timeoutPromise]);
 
-        if (novelObject) {
-          novelContent = await novelObject.text();
+          if (novelObject && "text" in novelObject && typeof novelObject.text === "function") {
+            novelContent = await novelObject.text();
+          }
         }
       } catch (error) {
         console.error("LOAD NOVEL FROM R2 ERROR:", error);
@@ -196,52 +201,7 @@ export default async function ChapterReaderPage({ params }: PageProps) {
     }
   }
 
-  // 6. Ghi lịch sử đọc & lượt xem
-  await Promise.all([
-    user
-      ? prisma.readingHistory
-          .upsert({
-            where: {
-              userId_chapterId: {
-                userId: user.id,
-                chapterId: chapter.id,
-              },
-            },
-            update: {
-              readAt: new Date(),
-              mangaId: chapter.mangaId,
-            },
-            create: {
-              userId: user.id,
-              mangaId: chapter.mangaId,
-              chapterId: chapter.id,
-              readAt: new Date(),
-            },
-          })
-          .catch((err) => console.error("HISTORY LOG ERROR:", err))
-      : Promise.resolve(null),
 
-    prisma.mangaView
-      .create({
-        data: {
-          mangaId: chapter.mangaId,
-        },
-      })
-      .catch((err) => console.error("VIEW LOG ERROR:", err)),
-
-    prisma.manga
-      .update({
-        where: {
-          id: chapter.mangaId,
-        },
-        data: {
-          views: {
-            increment: 1,
-          },
-        },
-      })
-      .catch((err) => console.error("MANGA VIEW INCREMENT ERROR:", err)),
-  ]).catch((err) => console.error("BACKGROUND TASKS ERROR:", err));
 
   // Tính toán Prev/Next Chapter
   const currentIndex = chapters.findIndex((item) => item.id === chapter.id);
@@ -253,6 +213,7 @@ export default async function ChapterReaderPage({ params }: PageProps) {
 
   return (
     <main className="min-h-screen bg-black text-white">
+      <ReadingTracker chapterId={chapter.id} />
       {/* HEADER */}
       <header className="sticky top-0 z-50 border-b border-gray-800 bg-black/95 backdrop-blur">
         <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-4 px-4">
@@ -287,7 +248,7 @@ export default async function ChapterReaderPage({ params }: PageProps) {
           </p>
 
           <h1 className="mt-1 text-2xl font-extrabold text-white sm:text-3xl">
-            {chapter.manga.title}
+            <a href={`/${chapter.manga.type}/${chapter.manga.id}`}>{chapter.manga.title}</a>
           </h1>
 
           <p className="mt-2 text-lg font-semibold text-gray-400">

@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { cookies } from "next/headers";
 import { createUnlockToken } from "@/lib/auth/unlock-token";
 import { env } from "cloudflare:workers";
+import { recordMangaView } from "@/lib/views";
 
 export async function GET(request: Request) {
   try {
@@ -145,13 +146,9 @@ export async function GET(request: Request) {
           })
           .catch((err) => console.error("HISTORY LOG ERROR:", err)),
 
-        prisma.mangaView
-          .create({
-            data: {
-              mangaId: chapter.mangaId,
-            },
-          })
-          .catch((err) => console.error("VIEW LOG ERROR:", err)),
+        recordMangaView(chapter.mangaId).catch((err) =>
+          console.error("VIEW LOG ERROR:", err)
+        ),
 
         prisma.manga
           .update({

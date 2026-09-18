@@ -4,15 +4,21 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   try {
     const now = new Date();
+    const todayStr = now.toLocaleDateString("en-CA", {
+      timeZone: "Asia/Ho_Chi_Minh",
+    });
 
-    const startOfToday = new Date(now);
-    startOfToday.setHours(0, 0, 0, 0);
+    const nowVN = new Date(
+      now.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" })
+    );
 
-    const startOf7Days = new Date(now);
-    startOf7Days.setDate(startOf7Days.getDate() - 7);
+    const d7 = new Date(nowVN);
+    d7.setDate(d7.getDate() - 7);
+    const d7Str = d7.toLocaleDateString("en-CA");
 
-    const startOf30Days = new Date(now);
-    startOf30Days.setDate(startOf30Days.getDate() - 30);
+    const d30 = new Date(nowVN);
+    d30.setDate(d30.getDate() - 30);
+    const d30Str = d30.toLocaleDateString("en-CA");
 
     // MyPhungg
     type ViewStatsResult = {
@@ -30,11 +36,11 @@ export async function GET() {
     // 1. Gộp 4 câu count của MangaView thành 1 query duy nhất
     const [viewStats] = await prisma.$queryRaw<ViewStatsResult[]>`
       SELECT 
-        COUNT(*) as totalViews,
-        COUNT(CASE WHEN "viewedAt" >= ${startOfToday} THEN 1 END) as todayViews,
-        COUNT(CASE WHEN "viewedAt" >= ${startOf7Days} THEN 1 END) as views7Days,
-        COUNT(CASE WHEN "viewedAt" >= ${startOf30Days} THEN 1 END) as views30Days
-      FROM "MangaView"
+        COALESCE(SUM("views"), 0) as totalViews,
+        COALESCE(SUM(CASE WHEN "date" >= ${todayStr} THEN "views" ELSE 0 END), 0) as todayViews,
+        COALESCE(SUM(CASE WHEN "date" >= ${d7Str} THEN "views" ELSE 0 END), 0) as views7Days,
+        COALESCE(SUM(CASE WHEN "date" >= ${d30Str} THEN "views" ELSE 0 END), 0) as views30Days
+      FROM "MangaDailyView"
     `;
 
     // 2. Đếm tổng số Manga và Chapter bằng SQL thô (hoặc dùng 2 câu prisma.count tuần tự)
@@ -97,16 +103,10 @@ export async function GET() {
         title: true,
         author: true,
         coverUrl: true,
-        _count: {
-          select: {
-            viewRecords: true,
-          },
-        },
+        views: true,
       },
       orderBy: {
-        viewRecords: {
-          _count: "desc",
-        },
+        views: "desc",
       },
       take: 10,
     });
@@ -128,7 +128,7 @@ export async function GET() {
         title: manga.title,
         author: manga.author,
         coverUrl: manga.coverUrl,
-        views: manga._count.viewRecords,
+        views: manga.views,
       })),
     });
   } catch (error) {

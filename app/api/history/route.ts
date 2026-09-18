@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
+import { recordMangaView } from "@/lib/views";
 
 export async function GET() {
   try {
@@ -126,6 +127,22 @@ export async function POST(request: Request) {
         readAt: new Date(),
       },
     });
+
+    try {
+      await recordMangaView(chapter.mangaId);
+      await prisma.manga.update({
+        where: {
+          id: chapter.mangaId,
+        },
+        data: {
+          views: {
+            increment: 1,
+          },
+        },
+      });
+    } catch (e) {
+      console.error("VIEW LOG ERROR:", e);
+    }
 
     return NextResponse.json({
       success: true,

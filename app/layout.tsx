@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
 import SiteGate from "./components/SiteGate";
+import ScrollToTop from "@/components/ScrollToTop";
 
 export const metadata: Metadata = {
   title: "Yoru Translation Group",
@@ -34,7 +35,10 @@ export default function RootLayout({
             __html: `(function(s){s.dataset.zone='11752123',s.src='https://al5sm.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`,
           }}
         />
-        <SiteGate>{children}</SiteGate>
+        <SiteGate>
+          {children}
+          <ScrollToTop />
+        </SiteGate>
       </body>
     </html>
   );
