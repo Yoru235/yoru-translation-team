@@ -6,8 +6,45 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const now = new Date();
+    const vnDateStr = now.toLocaleDateString("en-CA", {
+      timeZone: "Asia/Ho_Chi_Minh",
+    });
+    const currentMonthPrefix = vnDateStr.substring(0, 7); // "YYYY-MM"
 
-    const startOfMonth = new Date(
+    const [totalViews, mangaViews] = await Promise.all([
+      prisma.$queryRaw<{ count: bigint }[]>
+        `SELECT COALESCE(SUM("views"),0)::bigint AS count
+      FROM "MangaDailyView"
+      WHERE "date" LIKE ${currentMonthPrefix + "%"} `,
+      prisma.$queryRaw<{
+        mangaId: String,
+        title: String,
+        views: bigint
+      }[]>
+        `SELECT
+          m.id AS "mangaId",
+          m.title,
+          COALESCE(SUM(v."views"), 0)::bigint AS views
+        FROM "Manga" m
+        LEFT JOIN "MangaDailyView" v
+          ON v."mangaId" = m.id
+          AND v."date" LIKE ${currentMonthPrefix + "%"}
+        GROUP BY m.id, m.title
+        ORDER BY views DESC
+      `,
+    ]);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    return NextResponse.json({
+      success: true,
+      month: startOfMonth.toISOString(),
+      totalViews: Number(totalViews[0]?.count ?? 0),
+      mangaViews: mangaViews.map((item) => ({
+        mangaId: item.mangaId,
+        title: item.title,
+        views: Number(item.views),
+      })),
+    });
+    /*const startOfMonth = new Date(
       now.getFullYear(),
       now.getMonth(),
       1
@@ -48,7 +85,7 @@ export async function GET() {
         GROUP BY m.id, m.title
         ORDER BY views DESC
       `,
-    ]);
+    ]);*/
 
     return NextResponse.json({
       success: true,

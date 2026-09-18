@@ -7,6 +7,7 @@ import MangaLockGate from "@/components/MangaLockGate";
 import BookmarkButton from "@/components/BookmarkButton";
 import RatingStars from "@/app/components/RatingStars";
 import Comments from "@/components/Comments";
+import ChapterList from "@/components/ChapterList";
 
 export const revalidate = 60;
 
@@ -282,77 +283,8 @@ if (manga.isLocked && !isMangaUnlocked) {
       </section>
 
       {/* DANH SÁCH CHAPTER */}
-
       <section className="mx-auto max-w-5xl px-4 py-10">
-
-        <div className="mb-6">
-
-          <h2 className="text-2xl font-extrabold text-white">
-            Danh sách chapter
-          </h2>
-
-          <div className="mt-3 h-1 w-20 rounded-full bg-gradient-to-r from-purple-600 to-pink-500" />
-
-        </div>
-
-        {manga.chapters.length === 0 ? (
-
-          <div className="rounded-2xl border border-gray-800 bg-[#0d0d0d] p-10 text-center">
-
-            <p className="text-lg font-bold text-gray-300">
-              Chưa có chapter.
-            </p>
-
-            <p className="mt-2 text-sm text-gray-600">
-              Truyện này chưa được đăng chapter nào.
-            </p>
-
-          </div>
-
-        ) : (
-
-          <div className="space-y-3">
-
-            {manga.chapters.map((chapter) => (
-
-              <Link
-                key={chapter.id}
-                href={`/chapter/${chapter.id}`}
-                className="flex items-center justify-between rounded-xl border border-gray-800 bg-[#111111] px-5 py-4 transition hover:border-purple-600 hover:bg-purple-950/30"
-              >
-
-                <div>
-                  <p className="font-bold text-gray-200">
-  {chapter.volume !== null
-    ? `Vol. ${chapter.volume} — Chapter ${chapter.chapter}`
-    : `Chapter ${chapter.chapter}`}
-
-  {chapter.isH && (
-    <span className="ml-2 text-purple-400">
-      - H
-    </span>
-  )}
-
-  {chapter.isEnd && (
-    <span className="ml-2 text-pink-400">
-      - END
-    </span>
-  )}
-</p>
-                </div>
-
-                <span className="text-sm font-bold text-purple-400">
-                  Đọc →
-                </span>
-
-              </Link>
-
-            ))}
-
-          </div>
-
-        )}
-
+        <ChapterList chapters={manga.chapters} />
       </section>
             {/* COMMENTS */}
 

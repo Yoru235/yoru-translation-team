@@ -40,7 +40,7 @@ export default async function Home() {
         },
       }),
       prisma.translationGroup.findMany({
-        take: 100,
+        take: 1,
         orderBy: { createdAt: "desc" },
         include: {
           _count: {
