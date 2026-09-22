@@ -213,8 +213,11 @@ export async function GET(
     // LẤY ẢNH TỪ CLOUDFLARE R2
     // ==========================================
 
-    const object =
-      await env.UPLOADS.get(objectKey);
+    const timeoutPromise = new Promise<null>((resolve) =>
+      setTimeout(() => resolve(null), 6000)
+    );
+    const getPromise = env.UPLOADS.get(objectKey);
+    const object = await Promise.race([getPromise, timeoutPromise]);
 
     if (!object) {
       console.error(
@@ -222,7 +225,7 @@ export async function GET(
         objectKey
       );
 
-      return new NextResponse(
+      return new Response(
         "Không tìm thấy ảnh trên R2.",
         { status: 404 }
       );
@@ -240,20 +243,16 @@ export async function GET(
     // TRẢ ẢNH
     // ==========================================
 
-    return new NextResponse(
+    return new Response(
       object.body,
       {
         status: 200,
-
         headers: {
           "Content-Type": contentType,
-
           "Cache-Control":
             "private, no-store, max-age=0",
-
           "X-Content-Type-Options":
             "nosniff",
-
           "Content-Length":
             String(object.size),
         },
@@ -265,7 +264,7 @@ export async function GET(
       error
     );
 
-    return new NextResponse(
+    return new Response(
       "Không thể tải ảnh.",
       { status: 500 }
     );

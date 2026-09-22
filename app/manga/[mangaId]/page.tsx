@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { toMediaUrl } from "@/lib/media";
+import { getCurrentUser } from "@/lib/auth/session";
 import MangaLockGate from "@/components/MangaLockGate";
 import BookmarkButton from "@/components/BookmarkButton";
 import RatingStars from "@/app/components/RatingStars";
@@ -49,7 +51,7 @@ export async function generateMetadata({
     openGraph: {
       title,
       description,
-      images: manga.coverUrl ? [{ url: manga.coverUrl }] : [],
+      images: manga.coverUrl ? [{ url: toMediaUrl(manga.coverUrl) }] : [],
     },
   };
 }
@@ -59,42 +61,97 @@ export default async function MangaPage({
 }: PageProps) {
   const { mangaId } = await params;
 
-  const manga = await prisma.manga.findUnique({
-    where: {
-      id: mangaId,
-    },
-    include: {
-      translationGroup: true,
-      chapters: {
-        orderBy: {
-          chapter: "asc",
+  const [manga, user] = await Promise.all([
+    prisma.manga.findUnique({
+      where: {
+        id: mangaId,
+      },
+      include: {
+        translationGroup: true,
+        chapters: {
+          orderBy: {
+            chapter: "asc",
+          },
         },
       },
-    },
-  });
+    }),
+    getCurrentUser(),
+  ]);
 
   if (!manga) {
     notFound();
   }
 
+  const actualType = (manga.type || "manga").toLowerCase();
+  if (actualType !== "manga") {
+    redirect(`/${actualType}/${manga.id}`);
+  }
+
+  const [initialBookmarked, rawComments] = await Promise.all([
+    user
+      ? prisma.bookmark
+        .findUnique({
+          where: {
+            userId_mangaId: {
+              userId: user.id,
+              mangaId: manga.id,
+            },
+          },
+          select: { id: true },
+        })
+        .then(Boolean)
+      : Promise.resolve(false),
+    prisma.comment.findMany({
+      where: {
+        mangaId: manga.id,
+        chapterId: null,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            avatar: true,
+            role: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  const initialComments = rawComments.map((c) => ({
+    id: c.id,
+    content: c.content,
+    createdAt: c.createdAt.toISOString(),
+    user: {
+      id: c.user.id,
+      username: c.user.username,
+      avatar: c.user.avatar,
+      role: c.user.role,
+    },
+  }));
+
   const cookieStore = await cookies();
 
-const unlockCookie = cookieStore.get(
-  `manga_unlocked_${manga.id}`
-);
-
-const isMangaUnlocked =
-  unlockCookie?.value === "true";
-
-if (manga.isLocked && !isMangaUnlocked) {
-  return (
-    <MangaLockGate
-      mangaId={manga.id}
-      title={manga.title}
-      passwordHint={manga.passwordHint}
-    />
+  const unlockCookie = cookieStore.get(
+    `manga_unlocked_${manga.id}`
   );
-}
+
+  const isMangaUnlocked =
+    unlockCookie?.value === "true";
+
+  if (manga.isLocked && !isMangaUnlocked) {
+    return (
+      <MangaLockGate
+        mangaId={manga.id}
+        title={manga.title}
+        passwordHint={manga.passwordHint}
+      />
+    );
+  }
   return (
     <main className="min-h-screen bg-black text-white">
 
@@ -147,7 +204,7 @@ if (manga.isLocked && !isMangaUnlocked) {
 
               {manga.coverUrl ? (
                 <img
-                  src={manga.coverUrl}
+                  src={toMediaUrl(manga.coverUrl)}
                   alt={manga.title}
                   className="mx-auto w-full max-w-64 rounded-2xl object-cover shadow-2xl"
                 />
@@ -177,74 +234,74 @@ if (manga.isLocked && !isMangaUnlocked) {
                 </p>
               )}
 
-{manga.author && (
-  <p className="mt-3 text-sm text-gray-400">
-    <span className="font-semibold text-gray-500">
-      Tác giả:
-    </span>{" "}
-    {manga.author}
-  </p>
-)}
-<div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {manga.author && (
+                <p className="mt-3 text-sm text-gray-400">
+                  <span className="font-semibold text-gray-500">
+                    Tác giả:
+                  </span>{" "}
+                  {manga.author}
+                </p>
+              )}
+              <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
 
-  {manga.translationGroup && (
-    <div className="rounded-xl border border-gray-800 bg-[#111111] px-4 py-3">
-      <p className="text-xs font-semibold text-gray-500">
-        Nhóm dịch
-      </p>
-      <p className="mt-1 font-semibold text-purple-400">
-        {manga.translationGroup.name}
-      </p>
-    </div>
-  )}
+                {manga.translationGroup && (
+                  <div className="rounded-xl border border-gray-800 bg-[#111111] px-4 py-3">
+                    <p className="text-xs font-semibold text-gray-500">
+                      Nhóm dịch
+                    </p>
+                    <p className="mt-1 font-semibold text-purple-400">
+                      {manga.translationGroup.name}
+                    </p>
+                  </div>
+                )}
 
-  {manga.releaseDate && (
-    <div className="rounded-xl border border-gray-800 bg-[#111111] px-4 py-3">
-      <p className="text-xs font-semibold text-gray-500">
-        Ngày phát hành
-      </p>
-      <p className="mt-1 font-semibold text-gray-200">
-        {new Date(manga.releaseDate).toLocaleDateString("vi-VN")}
-      </p>
-    </div>
-  )}
+                {manga.releaseDate && (
+                  <div className="rounded-xl border border-gray-800 bg-[#111111] px-4 py-3">
+                    <p className="text-xs font-semibold text-gray-500">
+                      Ngày phát hành
+                    </p>
+                    <p className="mt-1 font-semibold text-gray-200">
+                      {new Date(manga.releaseDate).toLocaleDateString("vi-VN")}
+                    </p>
+                  </div>
+                )}
 
-  <div className="rounded-xl border border-gray-800 bg-[#111111] px-4 py-3">
-    <p className="text-xs font-semibold text-gray-500">
-      Lượt xem
-    </p>
-    <p className="mt-1 font-semibold text-gray-200">
-      {manga.views.toLocaleString("vi-VN")}
-    </p>
-  </div>
+                <div className="rounded-xl border border-gray-800 bg-[#111111] px-4 py-3">
+                  <p className="text-xs font-semibold text-gray-500">
+                    Lượt xem
+                  </p>
+                  <p className="mt-1 font-semibold text-gray-200">
+                    {manga.views.toLocaleString("vi-VN")}
+                  </p>
+                </div>
 
-  <div className="rounded-xl border border-gray-800 bg-[#111111] px-4 py-3">
-  <RatingStars
-    mangaId={manga.id}
-    initialRating={manga.rating}
-  />
-</div>
+                <div className="rounded-xl border border-gray-800 bg-[#111111] px-4 py-3">
+                  <RatingStars
+                    mangaId={manga.id}
+                    initialRating={manga.rating}
+                  />
+                </div>
 
-</div>
-             <div className="mt-5 flex flex-wrap gap-2">
+              </div>
+              <div className="mt-5 flex flex-wrap gap-2">
 
-  <span className="rounded-full bg-purple-900/50 px-3 py-1 text-sm text-purple-200">
-    {manga.status}
-  </span>
+                <span className="rounded-full bg-purple-900/50 px-3 py-1 text-sm text-purple-200">
+                  {manga.status}
+                </span>
 
-  {Array.isArray(manga.genres) &&
-    manga.genres.map((genre: unknown, index: number) => (
-      <span
-        key={index}
-        className="rounded-full bg-[#171717] px-3 py-1 text-sm text-gray-300"
-      >
-        {typeof genre === "string"
-          ? genre
-          : ""}
-      </span>
-    ))}
+                {Array.isArray(manga.genres) &&
+                  manga.genres.map((genre: unknown, index: number) => (
+                    <span
+                      key={index}
+                      className="rounded-full bg-[#171717] px-3 py-1 text-sm text-gray-300"
+                    >
+                      {typeof genre === "string"
+                        ? genre
+                        : ""}
+                    </span>
+                  ))}
 
-</div>
+              </div>
               {manga.description && (
                 <p className="mt-6 whitespace-pre-line leading-7 text-gray-300">
                   {manga.description}
@@ -254,14 +311,17 @@ if (manga.isLocked && !isMangaUnlocked) {
               <div className="mt-6 flex flex-wrap gap-3">
 
                 {manga.chapters.length > 0 && (
-                  <Link
+                  <a
                     href={`/chapter/${manga.chapters[0].id}`}
                     className="rounded-xl bg-gradient-to-r from-purple-700 to-pink-600 px-6 py-3 font-bold text-white transition hover:opacity-90"
                   >
                     Đọc từ đầu →
-                  </Link>
+                  </a>
                 )}
-<BookmarkButton mangaId={manga.id} />
+                <BookmarkButton
+                  mangaId={manga.id}
+                  initialBookmarked={initialBookmarked}
+                />
                 {manga.creditUrl && (
                   <a
                     href={manga.creditUrl}
@@ -286,10 +346,13 @@ if (manga.isLocked && !isMangaUnlocked) {
       <section className="mx-auto max-w-5xl px-4 py-10">
         <ChapterList chapters={manga.chapters} />
       </section>
-            {/* COMMENTS */}
+      {/* COMMENTS */}
 
       <section className="mx-auto max-w-5xl px-4 pb-10">
-        <Comments mangaId={manga.id} />
+        <Comments
+          mangaId={manga.id}
+          initialComments={initialComments}
+        />
       </section>
 
       {/* FOOTER */}

@@ -94,7 +94,6 @@ export default function Header() {
           {/* DESKTOP NAV */}
 
           <nav className="hidden items-center gap-6 md:flex">
-
             <Link
               href="/"
               className="text-sm font-medium text-gray-700 transition hover:text-purple-600"
@@ -124,12 +123,18 @@ export default function Header() {
             </Link>
 
             <Link
+              href="/novel"
+              className="text-sm font-medium text-gray-700 transition hover:text-purple-600"
+            >
+              Novel
+            </Link>
+
+            <Link
               href="/completed"
               className="text-sm font-medium text-gray-700 transition hover:text-purple-600"
             >
               Hoàn thành
             </Link>
-
           </nav>
 
           {/* RIGHT SIDE */}
@@ -234,6 +239,16 @@ export default function Header() {
                 className="rounded-xl px-4 py-3 text-sm font-medium hover:bg-purple-50"
               >
                 Manhua
+              </Link>
+
+              <Link
+                href="/novel"
+                onClick={() =>
+                  setMobileMenuOpen(false)
+                }
+                className="rounded-xl px-4 py-3 text-sm font-medium hover:bg-purple-50"
+              >
+                Novel
               </Link>
 
               <Link

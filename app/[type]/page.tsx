@@ -1,9 +1,25 @@
+import { notFound } from "next/navigation";
 import { rawQuery } from "@/lib/db";
 import MangaListPageClient from "@/app/components/MangaListPageClient";
 
 export const revalidate = 60;
 
-export default async function MangaListPage() {
+type PageProps = {
+  params: Promise<{
+    type: string;
+  }>;
+};
+
+const VALID_TYPES = ["manga", "manhwa", "manhua", "novel", "all"];
+
+export default async function TypeListPage({ params }: PageProps) {
+  const { type } = await params;
+  const normalizedType = (type || "").toLowerCase();
+
+  if (!VALID_TYPES.includes(normalizedType)) {
+    notFound();
+  }
+
   let initialMangas: any[] = [];
 
   try {
@@ -49,8 +65,13 @@ export default async function MangaListPage() {
       };
     });
   } catch (error) {
-    console.error("Lỗi SSR nạp danh sách truyện:", error);
+    console.error("Lỗi SSR nạp danh sách truyện theo type:", error);
   }
 
-  return <MangaListPageClient initialMangas={initialMangas} />;
+  return (
+    <MangaListPageClient
+      initialMangas={initialMangas}
+      defaultType={normalizedType}
+    />
+  );
 }

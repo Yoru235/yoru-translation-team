@@ -21,6 +21,9 @@
   "version_metadata": {
     "binding": "CF_VERSION_METADATA"
   },
+  "vars": {
+    "R2_PUBLIC_DOMAIN": "https://img.yoruteam.com",
+  },
   "r2_buckets": [
     {
       "binding": "UPLOADS",

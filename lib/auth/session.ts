@@ -1,5 +1,4 @@
 import { cookies } from "next/headers";
-import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 
 const SESSION_COOKIE = "yoru_session";
@@ -17,8 +16,12 @@ type SessionUser = {
 export async function createSession(userId: string) {
   const cookieStore = await cookies();
 
-  // Tạo token ngẫu nhiên
-  const token = randomBytes(32).toString("hex");
+  // Tạo token ngẫu nhiên an toàn bằng Web Crypto API (chuẩn Edge / Cloudflare Workers)
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  const token = Array.from(bytes, (byte) =>
+    byte.toString(16).padStart(2, "0")
+  ).join("");
 
   // Thời gian hết hạn: 7 ngày
   const expiresAt = new Date(

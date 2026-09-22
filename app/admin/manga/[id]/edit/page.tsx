@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { toMediaUrl } from "@/lib/media";
 
 type Manga = {
   id: string;
@@ -516,6 +517,10 @@ const [translationGroupId, setTranslationGroupId] =
                     Manhua
                   </option>
 
+                  <option value="Novel">
+                    Novel
+                  </option>
+
                   <option value="Comic">
                     Comic
                   </option>
@@ -617,7 +622,7 @@ const [translationGroupId, setTranslationGroupId] =
 
                   <div className="h-48 w-32 overflow-hidden rounded-xl border border-gray-800 bg-[#151515]">
                     <img
-                      src={coverUrl}
+                      src={toMediaUrl(coverUrl)}
                       alt="Cover preview"
                       className="h-full w-full object-cover"
                       onError={(event) => {

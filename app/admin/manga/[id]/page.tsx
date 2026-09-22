@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { toMediaUrl } from "@/lib/media";
 
 type Chapter = {
   id: string;
@@ -435,7 +436,7 @@ try {
 
                 {manga.coverUrl ? (
                   <img
-                    src={manga.coverUrl}
+                    src={toMediaUrl(manga.coverUrl)}
                     alt={manga.title}
                     className="h-full w-full object-cover"
                   />

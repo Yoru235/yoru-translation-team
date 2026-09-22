@@ -1,18 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Props = {
   mangaId: string;
+  initialBookmarked?: boolean;
 };
 
-export default function BookmarkButton({ mangaId }: Props) {
-  const [bookmarked, setBookmarked] = useState(false);
-  const [loading, setLoading] = useState(true);
+export default function BookmarkButton({ mangaId, initialBookmarked }: Props) {
+  const [bookmarked, setBookmarked] = useState(Boolean(initialBookmarked));
+  const [loading, setLoading] = useState(initialBookmarked === undefined);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const fetchedRef = useRef(false);
 
   useEffect(() => {
+    // Nếu SSR đã truyền trạng thái bookmark, không cần gọi fetch ngầm
+    if (initialBookmarked !== undefined) {
+      setBookmarked(initialBookmarked);
+      setLoading(false);
+      return;
+    }
+
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+
     async function loadBookmark() {
       try {
         const response = await fetch("/api/bookmarks", {
@@ -41,7 +53,7 @@ export default function BookmarkButton({ mangaId }: Props) {
     }
 
     void loadBookmark();
-  }, [mangaId]);
+  }, [mangaId, initialBookmarked]);
 
   async function handleBookmark() {
     try {
