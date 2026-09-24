@@ -4,6 +4,7 @@
 interface __BaseEnv_Env {
 	UPLOADS: R2Bucket;
 	yoru_database: D1Database;
+	KV_AUTH?: KVNamespace;
 	IMAGES: ImagesBinding;
 	CF_VERSION_METADATA: WorkerVersionMetadata;
 	ASSETS: Fetcher;

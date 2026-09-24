@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { toMediaUrl } from "@/lib/media";
 
 type TopManga = {
   id: string;
@@ -282,7 +283,7 @@ export default function AdminStatisticsPage() {
                               <div className="h-28 w-20 shrink-0 overflow-hidden rounded-xl bg-[#1b1b1b]">
                                 {manga.coverUrl ? (
                                   <img
-                                    src={manga.coverUrl}
+                                    src={toMediaUrl(manga.coverUrl)}
                                     alt={manga.title}
                                     className="h-full w-full object-cover"
                                   />

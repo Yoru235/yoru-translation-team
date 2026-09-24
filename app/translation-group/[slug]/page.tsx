@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { toMediaUrl } from "@/lib/media";
 import MangaCard from "@/app/components/MangaCard";
 
 type PageProps = {
@@ -48,7 +49,7 @@ export default async function TranslationGroupPage({ params }: PageProps) {
           <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full bg-gray-100">
             {group.avatar ? (
               <img
-                src={group.avatar}
+                src={toMediaUrl(group.avatar)}
                 alt={group.name}
                 className="h-full w-full object-cover"
               />

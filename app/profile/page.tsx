@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { toMediaUrl } from "@/lib/media";
 
 type UserProfile = {
   id: string;
@@ -502,7 +503,7 @@ formData.append("type", "avatar");
   <div className="relative h-24 w-24 overflow-hidden rounded-full border-4 border-white bg-gradient-to-br from-purple-600 to-pink-500 text-white shadow-lg">
     {user.avatar ? (
       <img
-        src={user.avatar}
+        src={toMediaUrl(user.avatar)}
         alt={`Avatar của ${user.username}`}
         className="h-full w-full object-cover"
       />
@@ -511,7 +512,7 @@ formData.append("type", "avatar");
   <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-gradient-to-br from-purple-600 to-pink-500 text-white shadow-lg">
     {user.avatar ? (
       <img
-        src={user.avatar}
+        src={toMediaUrl(user.avatar)}
         alt={user.username}
         className="h-full w-full object-cover"
       />

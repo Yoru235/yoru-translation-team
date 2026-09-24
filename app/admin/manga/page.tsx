@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { toMediaUrl } from "@/lib/media";
+import { getMangaUrl } from "@/lib/manga-url";
 
 type Manga = {
   id: string;
@@ -429,7 +431,7 @@ export default function AdminMangaPage() {
                         <div className="h-32 w-24 shrink-0 overflow-hidden rounded-xl bg-[#1b1b1b]">
                           {manga.coverUrl ? (
                             <img
-                              src={manga.coverUrl}
+                              src={toMediaUrl(manga.coverUrl)}
                               alt={manga.title}
                               className="h-full w-full object-cover"
                             />
@@ -472,7 +474,7 @@ export default function AdminMangaPage() {
 
                         <div className="flex flex-wrap gap-2">
                           <Link
-                            href={`/manga/${manga.id}`}
+                            href={getMangaUrl(manga)}
                             className="rounded-xl border border-gray-700 bg-[#151515] px-4 py-2 text-sm font-bold text-gray-300 transition hover:border-purple-600 hover:text-purple-300"
                           >
                             Xem

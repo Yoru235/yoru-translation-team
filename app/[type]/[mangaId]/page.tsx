@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { toMediaUrl } from "@/lib/media";
+import { getCurrentUser } from "@/lib/auth/session";
 import MangaLockGate from "@/components/MangaLockGate";
 import BookmarkButton from "@/components/BookmarkButton";
 import RatingStars from "@/app/components/RatingStars";
@@ -23,10 +25,8 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { mangaId } = await params;
 
-  const manga = await prisma.manga.findFirst({
-    where: {
-      OR: [{ id: mangaId }],
-    },
+  const manga = await prisma.manga.findUnique({
+    where: { id: mangaId },
     select: {
       title: true,
       description: true,
@@ -52,31 +52,86 @@ export async function generateMetadata({
     openGraph: {
       title,
       description,
-      images: manga.coverUrl ? [{ url: manga.coverUrl }] : [],
+      images: manga.coverUrl ? [{ url: toMediaUrl(manga.coverUrl) }] : [],
     },
   };
 }
 
 export default async function MangaPage({ params }: PageProps) {
-  const { mangaId } = await params;
+  const { type, mangaId } = await params;
 
-  const manga = await prisma.manga.findFirst({
-    where: {
-      OR: [{ id: mangaId }],
-    },
-    include: {
-      translationGroup: true,
-      chapters: {
-        orderBy: {
-          chapter: "asc",
+  const [manga, user] = await Promise.all([
+    prisma.manga.findUnique({
+      where: {
+        id: mangaId,
+      },
+      include: {
+        translationGroup: true,
+        chapters: {
+          orderBy: {
+            chapter: "asc",
+          },
         },
       },
-    },
-  });
+    }),
+    getCurrentUser(),
+  ]);
 
   if (!manga) {
     notFound();
   }
+
+  const actualType = (manga.type || "manga").toLowerCase();
+  if (type.toLowerCase() !== actualType) {
+    redirect(`/${actualType}/${manga.id}`);
+  }
+
+  const [initialBookmarked, rawComments] = await Promise.all([
+    user
+      ? prisma.bookmark
+        .findUnique({
+          where: {
+            userId_mangaId: {
+              userId: user.id,
+              mangaId: manga.id,
+            },
+          },
+          select: { id: true },
+        })
+        .then(Boolean)
+      : Promise.resolve(false),
+    prisma.comment.findMany({
+      where: {
+        mangaId: manga.id,
+        chapterId: null,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            avatar: true,
+            role: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  const initialComments = rawComments.map((c) => ({
+    id: c.id,
+    content: c.content,
+    createdAt: c.createdAt.toISOString(),
+    user: {
+      id: c.user.id,
+      username: c.user.username,
+      avatar: c.user.avatar,
+      role: c.user.role,
+    },
+  }));
 
   const cookieStore = await cookies();
 
@@ -130,7 +185,7 @@ export default async function MangaPage({ params }: PageProps) {
             <div className="shrink-0 md:w-64">
               {manga.coverUrl ? (
                 <img
-                  src={manga.coverUrl}
+                  src={toMediaUrl(manga.coverUrl)}
                   alt={manga.title}
                   className="mx-auto w-full max-w-64 rounded-2xl object-cover shadow-2xl"
                 />
@@ -228,15 +283,18 @@ export default async function MangaPage({ params }: PageProps) {
 
               <div className="mt-6 flex flex-wrap gap-3">
                 {manga.chapters.length > 0 && (
-                  <Link
+                  <a
                     href={`/chapter/${manga.chapters[0].id}`}
                     className="rounded-xl bg-gradient-to-r from-purple-700 to-pink-600 px-6 py-3 font-bold text-white transition hover:opacity-90"
                   >
                     Đọc từ đầu →
-                  </Link>
+                  </a>
                 )}
 
-                <BookmarkButton mangaId={manga.id} />
+                <BookmarkButton
+                  mangaId={manga.id}
+                  initialBookmarked={initialBookmarked}
+                />
 
                 {manga.creditUrl && (
                   <a
@@ -261,7 +319,10 @@ export default async function MangaPage({ params }: PageProps) {
 
       {/* COMMENTS */}
       <section className="mx-auto max-w-5xl px-4 pb-10">
-        <Comments mangaId={manga.id} />
+        <Comments
+          mangaId={manga.id}
+          initialComments={initialComments}
+        />
       </section>
 
       {/* FOOTER */}

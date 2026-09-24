@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { cache } from "react";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createUnlockToken } from "@/lib/auth/unlock-token";
+import { toMediaUrl } from "@/lib/media";
+import { getMangaUrl } from "@/lib/manga-url";
 import { env } from "cloudflare:workers";
 import Comments from "@/components/Comments";
 import ChapterLockGate from "@/components/ChapterLockGate";
@@ -16,25 +18,119 @@ type PageProps = {
   }>;
 };
 
+type ChapterWithDetails = {
+  id: string;
+  chapter: number;
+  volume: number | null;
+  mangaId: string;
+  chapterType: string;
+  content: string | null;
+  isH: boolean;
+  isEnd: boolean;
+  isLocked: boolean;
+  passwordHash: string | null;
+  passwordHint: string | null;
+  manga: {
+    id: string;
+    title: string;
+    coverUrl: string | null;
+    type: string;
+    creditUrl: string | null;
+    isLocked: boolean;
+    passwordHash: string | null;
+    passwordHint: string | null;
+  };
+  images: Array<{
+    id: string;
+    imageUrl: string;
+    fileName: string;
+    order: number;
+  }>;
+};
+
+// Cache dữ liệu chapter trong cùng một request và thực thi bằng SQL thuần siêu nhẹ trên Cloudflare D1
+const getChapter = cache(async (chapterId: string): Promise<ChapterWithDetails | null> => {
+  if (!env.yoru_database) {
+    throw new Error("D1 Database binding 'yoru_database' không tồn tại.");
+  }
+
+  const [chapterResult, imagesResult] = await Promise.all([
+    env.yoru_database
+      .prepare(`
+        SELECT 
+          c."id",
+          c."chapter",
+          c."volume",
+          c."mangaId",
+          c."chapterType",
+          c."content",
+          c."isH",
+          c."isEnd",
+          c."isLocked",
+          c."passwordHash",
+          c."passwordHint",
+          m."id" AS "manga_id",
+          m."title" AS "manga_title",
+          m."coverUrl" AS "manga_coverUrl",
+          m."type" AS "manga_type",
+          m."creditUrl" AS "manga_creditUrl",
+          m."isLocked" AS "manga_isLocked",
+          m."passwordHash" AS "manga_passwordHash",
+          m."passwordHint" AS "manga_passwordHint"
+        FROM "Chapter" c
+        INNER JOIN "Manga" m ON c."mangaId" = m."id"
+        WHERE c."id" = ?
+        LIMIT 1
+      `)
+      .bind(chapterId)
+      .first<any>(),
+    env.yoru_database
+      .prepare(`
+        SELECT "id", "imageUrl", "fileName", "order"
+        FROM "ChapterImage"
+        WHERE "chapterId" = ?
+        ORDER BY "order" ASC
+      `)
+      .bind(chapterId)
+      .all<{ id: string; imageUrl: string; fileName: string; order: number }>(),
+  ]);
+
+  if (!chapterResult) {
+    return null;
+  }
+
+  return {
+    id: chapterResult.id,
+    chapter: Number(chapterResult.chapter),
+    volume: chapterResult.volume !== null ? Number(chapterResult.volume) : null,
+    mangaId: chapterResult.mangaId,
+    chapterType: chapterResult.chapterType || "Manga",
+    content: chapterResult.content,
+    isH: Boolean(chapterResult.isH),
+    isEnd: Boolean(chapterResult.isEnd),
+    isLocked: Boolean(chapterResult.isLocked),
+    passwordHash: chapterResult.passwordHash,
+    passwordHint: chapterResult.passwordHint,
+    manga: {
+      id: chapterResult.manga_id,
+      title: chapterResult.manga_title,
+      coverUrl: chapterResult.manga_coverUrl,
+      type: chapterResult.manga_type,
+      creditUrl: chapterResult.manga_creditUrl,
+      isLocked: Boolean(chapterResult.manga_isLocked),
+      passwordHash: chapterResult.manga_passwordHash,
+      passwordHint: chapterResult.manga_passwordHint,
+    },
+    images: imagesResult?.results || [],
+  };
+});
+
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { chapterId } = await params;
 
-  const chapter = await prisma.chapter.findUnique({
-    where: { id: chapterId },
-    select: {
-      chapter: true,
-      volume: true,
-      manga: {
-        select: {
-          title: true,
-          coverUrl: true,
-          type: true,
-        },
-      },
-    },
-  });
+  const chapter = await getChapter(chapterId);
 
   if (!chapter) {
     return {
@@ -50,7 +146,7 @@ export async function generateMetadata({
     description: `Đọc ${chapter.manga.title} ${volStr}Chapter ${chapter.chapter} online tại Yoru Translation Group.`,
     openGraph: {
       title,
-      images: chapter.manga.coverUrl ? [{ url: chapter.manga.coverUrl }] : [],
+      images: chapter.manga.coverUrl ? [{ url: toMediaUrl(chapter.manga.coverUrl) }] : [],
     },
   };
 }
@@ -58,33 +154,10 @@ export async function generateMetadata({
 export default async function ChapterReaderPage({ params }: PageProps) {
   const { chapterId } = await params;
 
-  // 1 & 2. Kiểm tra session và lấy thông tin chapter song song trong SSR
+  // 1 & 2. Kiểm tra session và lấy thông tin chapter song song trong SSR (getChapter dùng chung cache với generateMetadata)
   const [user, chapter] = await Promise.all([
     getCurrentUser(),
-    prisma.chapter.findUnique({
-      where: {
-        id: chapterId,
-      },
-      include: {
-        images: {
-          orderBy: {
-            order: "asc",
-          },
-        },
-        manga: {
-          select: {
-            id: true,
-            title: true,
-            coverUrl: true,
-            type: true,
-            creditUrl: true,
-            isLocked: true,
-            passwordHash: true,
-            passwordHint: true,
-          },
-        },
-      },
-    }),
+    getChapter(chapterId),
   ]);
 
   if (!user) {
@@ -157,22 +230,21 @@ export default async function ChapterReaderPage({ params }: PageProps) {
     );
   }
 
-  // 4. Lấy danh sách chapter để điều hướng Prev / Next
-  const chapters = await prisma.chapter.findMany({
-    where: {
-      mangaId: chapter.mangaId,
-    },
-    orderBy: {
-      chapter: "asc",
-    },
-    select: {
-      id: true,
-      chapter: true,
-      volume: true,
-      isH: true,
-      isEnd: true,
-    },
-  });
+  // 4. Lấy Prev / Next chapter trực tiếp qua 2 query D1 SQL thuần siêu nhẹ
+  const [previousChapter, nextChapter] = await Promise.all([
+    env.yoru_database
+      .prepare(
+        'SELECT "id", "chapter" FROM "Chapter" WHERE "mangaId" = ? AND "chapter" < ? ORDER BY "chapter" DESC LIMIT 1'
+      )
+      .bind(chapter.mangaId, chapter.chapter)
+      .first<{ id: string; chapter: number }>(),
+    env.yoru_database
+      .prepare(
+        'SELECT "id", "chapter" FROM "Chapter" WHERE "mangaId" = ? AND "chapter" > ? ORDER BY "chapter" ASC LIMIT 1'
+      )
+      .bind(chapter.mangaId, chapter.chapter)
+      .first<{ id: string; chapter: number }>(),
+  ]);
 
   // 5. Đọc nội dung Novel từ Cloudflare R2 trong SSR nếu có
   let novelContent = chapter.content || "";
@@ -200,16 +272,6 @@ export default async function ChapterReaderPage({ params }: PageProps) {
       }
     }
   }
-
-
-
-  // Tính toán Prev/Next Chapter
-  const currentIndex = chapters.findIndex((item) => item.id === chapter.id);
-  const previousChapter = currentIndex > 0 ? chapters[currentIndex - 1] : null;
-  const nextChapter =
-    currentIndex >= 0 && currentIndex < chapters.length - 1
-      ? chapters[currentIndex + 1]
-      : null;
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -248,7 +310,9 @@ export default async function ChapterReaderPage({ params }: PageProps) {
           </p>
 
           <h1 className="mt-1 text-2xl font-extrabold text-white sm:text-3xl">
-            <a href={`/${chapter.manga.type}/${chapter.manga.id}`}>{chapter.manga.title}</a>
+            <Link href={getMangaUrl({ id: chapter.mangaId, type: chapter.manga.type })}>
+              {chapter.manga.title}
+            </Link>
           </h1>
 
           <p className="mt-2 text-lg font-semibold text-gray-400">
@@ -276,7 +340,7 @@ export default async function ChapterReaderPage({ params }: PageProps) {
           )}
 
           <Link
-            href={`/manga/${chapter.mangaId}`}
+            href={getMangaUrl({ id: chapter.mangaId, type: chapter.manga.type })}
             className="rounded-xl bg-gradient-to-r from-purple-700 to-pink-600 px-5 py-2 text-sm font-bold text-white transition hover:opacity-90"
           >
             Danh sách
@@ -315,7 +379,7 @@ export default async function ChapterReaderPage({ params }: PageProps) {
                   {chapter.images.map((image) => (
                     <div key={image.id} className="relative w-full">
                       <img
-                        src={image.imageUrl}
+                        src={toMediaUrl(image.imageUrl)}
                         alt={`${chapter.manga.title} - Chapter ${chapter.chapter} - ${image.fileName}`}
                         className="block h-auto w-full select-none"
                         draggable={false}
@@ -340,7 +404,7 @@ export default async function ChapterReaderPage({ params }: PageProps) {
               {chapter.images.map((image) => (
                 <div key={image.id} className="relative w-full">
                   <img
-                    src={image.imageUrl}
+                    src={toMediaUrl(image.imageUrl)}
                     alt={`${chapter.manga.title} - Chapter ${chapter.chapter} - ${image.fileName}`}
                     className="block h-auto w-full select-none"
                     draggable={false}
@@ -357,15 +421,17 @@ export default async function ChapterReaderPage({ params }: PageProps) {
       {/* CREDIT / CRE CUỐI CHAPTER */}
       {chapter.manga.creditUrl && (
         <section className="border-t border-gray-900 bg-black">
-          <div className="yoru-reader-images flex flex-col items-center select-none">
-            <img
-              src={chapter.manga.creditUrl}
-              alt={`${chapter.manga.title} - Credit`}
-              className="block h-auto w-full"
-              draggable={false}
-              loading="lazy"
-              decoding="async"
-            />
+          <div className="mx-auto max-w-5xl">
+            <div className="yoru-reader-images flex flex-col items-center select-none">
+              <img
+                src={toMediaUrl(chapter.manga.creditUrl)}
+                alt={`${chapter.manga.title} - Credit`}
+                className="block h-auto w-full"
+                draggable={false}
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
           </div>
         </section>
       )}

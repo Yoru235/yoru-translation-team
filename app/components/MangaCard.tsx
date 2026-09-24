@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { getMangaUrl } from "@/lib/manga-url";
+import { toMediaUrl } from "@/lib/media";
 
 type MangaCardProps = {
   id: string;
@@ -19,6 +20,7 @@ export default function MangaCard({
   slug,
 }: MangaCardProps) {
   const router = useRouter();
+  const coverSrc = toMediaUrl(coverUrl);
 
   return (
     <button
@@ -27,9 +29,9 @@ export default function MangaCard({
       className="group w-full text-left"
     >
       <div className="aspect-[2/3] overflow-hidden rounded-xl bg-gray-200 shadow-sm">
-        {coverUrl ? (
+        {coverSrc ? (
           <img
-            src={coverUrl}
+            src={coverSrc}
             alt={title}
             className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
           />
@@ -45,4 +47,4 @@ export default function MangaCard({
       </h3>
     </button>
   );
-}
+}

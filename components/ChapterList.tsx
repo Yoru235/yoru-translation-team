@@ -87,7 +87,7 @@ export default function ChapterList({ chapters }: ChapterListProps) {
           );
 
           return (
-            <Link
+            <a
               key={chapter.id}
               href={`/chapter/${chapter.id}`}
               className="flex items-center justify-between rounded-xl border border-gray-800 bg-[#111111] px-5 py-3.5 transition hover:border-purple-600 hover:bg-purple-950/30"
@@ -112,7 +112,7 @@ export default function ChapterList({ chapters }: ChapterListProps) {
               </div>
 
               <span className="text-sm font-bold text-purple-400">Đọc →</span>
-            </Link>
+            </a>
           );
         })}
       </div>

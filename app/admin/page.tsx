@@ -3,6 +3,7 @@
 import { ChangeEvent, DragEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import JSZip from "jszip";
+import { toMediaUrl } from "@/lib/media";
 
 /* =========================================================
 TYPE
@@ -85,6 +86,13 @@ const genres: Genre[] = [
   { id: "ABO", name: "ABO" },
   { id: "Mpreg", name: "Nam mang thai" },
   { id: "Cuntboy", name: "Trôn có lài" },
+  { id: "Superpower", name: "Siêu năng lực" },
+  { id: "Duplicity", name: "Khẩu thị tâm phi" },
+  { id: "Enemies to lovers", name: "Oan gia ngõ hẹp" },
+  { id: "Mysterious", name: "Bí ẩn" },
+  { id: "Vengeance", name: "Trả thù" },
+  { id: "Manipulation", name: "Thao túng" },
+  { id: "Non-human", name: "Phi nhân loại" },
 ];
 
 /* =========================================================
@@ -113,6 +121,164 @@ const isImageFile = (filename: string) => {
     lower.endsWith(".gif")
   );
 };
+
+/* =========================================================
+XỬ LÝ WATERMARK TRÊN CANVAS
+========================================================= */
+
+async function applyWatermarkToImageFile(
+  file: File,
+  text: string,
+  type: "text" | "image" = "text",
+  watermarkImageFile: File | null = null,
+): Promise<File> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(file);
+        return;
+      }
+
+      // Vẽ ảnh gốc
+      ctx.drawImage(img, 0, 0);
+
+      if (type === "text") {
+        const lines = text
+          .split("\n")
+          .map((l) => l.trim())
+          .filter((l) => l.length > 0);
+
+        if (lines.length > 0) {
+          // Tính tỷ lệ khung hình: height / width
+          const aspectRatio = canvas.height / canvas.width;
+          // Manga (trang đơn, aspectRatio < 2.0) -> dùng ~1.7% width (nhỏ gọn hơn)
+          // Manhwa (dải dài webtoon, aspectRatio >= 2.0) -> dùng ~2.4% width
+          const scaleRatio = aspectRatio >= 2.0 ? 0.024 : 0.017;
+
+          const baseFontSize = Math.max(
+            12,
+            Math.min(Math.round(canvas.width * scaleRatio), 48),
+          );
+          const lineSpacing = Math.round(baseFontSize * 0.3);
+          const fontStack = `bold ${baseFontSize}px Arial, "Helvetica Neue", sans-serif`;
+
+          // Margin từ góc dưới bên phải (dùng canvas.width để marginY không bị nổ to trên ảnh Manhwa dài)
+          const marginX = Math.max(10, Math.min(Math.round(canvas.width * 0.018), 28));
+          const marginY = Math.max(10, Math.min(Math.round(canvas.width * 0.018), 28));
+
+          const strokeWidth = Math.max(2, Math.round(baseFontSize * 0.16));
+
+          const totalHeight =
+            lines.length * baseFontSize + (lines.length - 1) * lineSpacing;
+          let currentY = canvas.height - marginY - totalHeight + baseFontSize;
+          const currentX = canvas.width - marginX;
+
+          lines.forEach((line, index) => {
+            // Viền chữ màu trắng bên ngoài
+            ctx.font = fontStack;
+            ctx.textAlign = "right";
+            ctx.textBaseline = "bottom";
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = strokeWidth;
+            ctx.lineJoin = "round";
+            ctx.miterLimit = 2;
+            ctx.strokeText(line, currentX, currentY);
+
+            // Dòng 1 chữ đen (#000000), các dòng tiếp theo chữ đỏ (#dc2626)
+            if (index === 0) {
+              ctx.fillStyle = "#000000";
+            } else {
+              ctx.fillStyle = "#dc2626";
+            }
+
+            ctx.fillText(line, currentX, currentY);
+
+            currentY += baseFontSize + lineSpacing;
+          });
+        }
+      } else if (type === "image" && watermarkImageFile) {
+        const wmImg = new Image();
+        const wmUrl = URL.createObjectURL(watermarkImageFile);
+
+        wmImg.onload = () => {
+          URL.revokeObjectURL(wmUrl);
+
+          const wmWidth = canvas.width * 0.2;
+          const wmHeight = (wmImg.height / wmImg.width) * wmWidth;
+          const marginX = Math.max(10, Math.min(Math.round(canvas.width * 0.025), 35));
+          const marginY = Math.max(10, Math.min(Math.round(canvas.width * 0.025), 35));
+          const x = canvas.width - marginX - wmWidth;
+          const y = canvas.height - marginY - wmHeight;
+
+          ctx.drawImage(wmImg, x, y, wmWidth, wmHeight);
+
+          const outputType =
+            file.type === "image/png"
+              ? "image/png"
+              : file.type === "image/webp"
+                ? "image/webp"
+                : "image/jpeg";
+
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                resolve(file);
+                return;
+              }
+              resolve(new File([blob], file.name, { type: outputType }));
+            },
+            outputType,
+            0.92,
+          );
+        };
+
+        wmImg.onerror = () => {
+          URL.revokeObjectURL(wmUrl);
+          resolve(file);
+        };
+
+        wmImg.src = wmUrl;
+        return;
+      }
+
+      const outputType =
+        file.type === "image/png"
+          ? "image/png"
+          : file.type === "image/webp"
+            ? "image/webp"
+            : "image/jpeg";
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            resolve(file);
+            return;
+          }
+          resolve(new File([blob], file.name, { type: outputType }));
+        },
+        outputType,
+        0.92,
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(file);
+    };
+
+    img.src = url;
+  });
+}
 
 /* =========================================================
 ADMIN PAGE
@@ -179,12 +345,12 @@ export default function AdminPage() {
 
   const [isH, setIsH] = useState(false);
   const [isEnd, setIsEnd] = useState(false);
-  const [isWatermarkEnabled, setIsWatermarkEnabled] = useState(false);
+  const [isWatermarkEnabled, setIsWatermarkEnabled] = useState(true);
 
   const [watermarkType, setWatermarkType] = useState<"text" | "image">("text");
 
   const [watermarkText, setWatermarkText] = useState(
-    "YORUTEAM.COM ĐỂ ỦNG HỘ NHÓM DỊCH",
+    "HÃY ỦNG HỘ NHÓM DỊCH TẠI YORUTEAM.COM\nNẾU VIEW QUÁ ÍT = DROP TRUYỆN",
   );
 
   const [watermarkImage, setWatermarkImage] = useState<File | null>(null);
@@ -655,60 +821,24 @@ export default function AdminPage() {
   ========================================================= */
 
   const uploadSingleImage = async (file: File) => {
+    let fileToUpload = file;
+
+    if (isWatermarkEnabled) {
+      try {
+        fileToUpload = await applyWatermarkToImageFile(
+          file,
+          watermarkText,
+          watermarkType,
+          watermarkImage,
+        );
+      } catch (wmError) {
+        console.error("Lỗi đóng watermark:", wmError);
+      }
+    }
+
     const formData = new FormData();
-
-    formData.append("file", file);
-
+    formData.append("file", fileToUpload);
     formData.append("type", "chapter");
-
-    /* =====================================
-   WATERMARK
-===================================== */
-
-    formData.append("watermarkEnabled", String(isWatermarkEnabled));
-
-    if (isWatermarkEnabled && watermarkType === "text") {
-      formData.append("watermarkType", "text");
-
-      formData.append("watermarkText", watermarkText.trim());
-    }
-
-    if (isWatermarkEnabled && watermarkType === "image" && watermarkImage) {
-      formData.append("watermarkType", "image");
-
-      formData.append("watermarkImage", watermarkImage);
-    }
-    formData.append("watermarkEnabled", String(isWatermarkEnabled));
-
-    if (isWatermarkEnabled && watermarkType === "text") {
-      formData.append("watermarkType", "text");
-
-      formData.append("watermarkText", watermarkText.trim());
-    }
-
-    if (isWatermarkEnabled && watermarkType === "image" && watermarkImage) {
-      formData.append("watermarkType", "image");
-
-      formData.append("watermarkImage", watermarkImage);
-    }
-
-    /* =====================================
-     WATERMARK
-  ===================================== */
-
-    formData.append("watermarkEnabled", String(isWatermarkEnabled));
-
-    if (isWatermarkEnabled && watermarkType === "text") {
-      formData.append("watermarkType", "text");
-
-      formData.append("watermarkText", watermarkText.trim());
-    }
-
-    if (isWatermarkEnabled && watermarkType === "image" && watermarkImage) {
-      formData.append("watermarkType", "image");
-
-      formData.append("watermarkImage", watermarkImage);
-    }
 
     const response = await fetch("/api/upload", {
       method: "POST",
@@ -1250,6 +1380,19 @@ export default function AdminPage() {
           });
         }
 
+        if (isWatermarkEnabled && chapterType !== "Novel") {
+          try {
+            file = await applyWatermarkToImageFile(
+              file,
+              watermarkText,
+              watermarkType,
+              watermarkImage,
+            );
+          } catch (wmError) {
+            console.error("Lỗi đóng watermark:", wmError);
+          }
+        }
+
         const formData = new FormData();
 
         formData.append("file", file);
@@ -1275,14 +1418,14 @@ export default function AdminPage() {
         if (!uploadResponse.ok) {
           throw new Error(
             uploadData?.error ||
-              `Upload ảnh ${image.name} thất bại. HTTP ${uploadResponse.status}.`,
+            `Upload ảnh ${image.name} thất bại. HTTP ${uploadResponse.status}.`,
           );
         }
 
         if (!uploadData?.success) {
           throw new Error(
             uploadData?.error ||
-              `API không trả về kết quả upload hợp lệ cho ảnh ${image.name}.`,
+            `API không trả về kết quả upload hợp lệ cho ảnh ${image.name}.`,
           );
         }
         const uploadedImage = uploadData.images?.[0];
@@ -1381,11 +1524,13 @@ export default function AdminPage() {
       setZipFile(null);
       setIsH(false);
       setIsEnd(false);
-      setIsWatermarkEnabled(false);
+      setIsWatermarkEnabled(true);
 
       setWatermarkType("text");
 
-      setWatermarkText("YORUTEAM.COM ĐỂ ỦNG HỘ NHÓM DỊCH");
+      setWatermarkText(
+        "HÃY ỦNG HỘ NHÓM DỊCH TẠI YORUTEAM.COM\nNẾU VIEW QUÁ ÍT = DROP TRUYỆN",
+      );
 
       setWatermarkImage(null);
 
@@ -1974,10 +2119,10 @@ export default function AdminPage() {
                 onChange={(event) =>
                   setChapterType(
                     event.target.value as
-                      | "Manga"
-                      | "Manhwa"
-                      | "Manhua"
-                      | "Novel",
+                    | "Manga"
+                    | "Manhwa"
+                    | "Manhua"
+                    | "Novel",
                   )
                 }
                 className="w-full rounded-xl border border-purple-800 bg-[#18101f] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-pink-400"
@@ -2423,10 +2568,10 @@ export default function AdminPage() {
               onClick={handleUploadChapter}
               className={
                 isProcessingZip ||
-                (chapterType === "Novel" &&
-                  !novelContent.trim() &&
-                  zipImages.length === 0) ||
-                (chapterType !== "Novel" && zipImages.length === 0)
+                  (chapterType === "Novel" &&
+                    !novelContent.trim() &&
+                    zipImages.length === 0) ||
+                  (chapterType !== "Novel" && zipImages.length === 0)
                   ? "w-full cursor-not-allowed rounded-xl bg-[#2a2630] px-6 py-4 font-bold text-gray-500"
                   : "w-full rounded-xl bg-gradient-to-r from-[#75257f] to-[#d13b91] px-6 py-4 font-bold text-white shadow-lg transition hover:scale-[1.01] hover:shadow-xl"
               }
@@ -2595,7 +2740,7 @@ export default function AdminPage() {
                       <div className="flex items-center gap-4">
                         {group.avatar ? (
                           <img
-                            src={group.avatar}
+                            src={toMediaUrl(group.avatar)}
                             alt={group.name}
                             className="h-16 w-16 rounded-full object-cover"
                           />

@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-import { env } from "cloudflare:workers";
+import { R2_PUBLIC_DOMAIN } from "@/lib/media";
 
 const ALLOWED_PREFIXES = [
   "covers/",
@@ -23,37 +22,6 @@ function isAllowedKey(key: string) {
   );
 }
 
-function getContentType(key: string) {
-  const extension = key
-    .split(".")
-    .pop()
-    ?.toLowerCase();
-
-  switch (extension) {
-    case "jpg":
-    case "jpeg":
-      return "image/jpeg";
-
-    case "png":
-      return "image/png";
-
-    case "webp":
-      return "image/webp";
-
-    case "gif":
-      return "image/gif";
-
-    case "bmp":
-      return "image/bmp";
-
-    case "txt":
-      return "text/plain; charset=utf-8";
-
-    default:
-      return "application/octet-stream";
-  }
-}
-
 export async function GET(
   _request: Request,
   context: {
@@ -68,49 +36,21 @@ export async function GET(
     const objectKey = key.join("/");
 
     if (!isAllowedKey(objectKey)) {
-      return new NextResponse("Forbidden", {
+      return new Response("Forbidden", {
         status: 403,
       });
     }
 
-    const object = await env.UPLOADS.get(objectKey);
-
-    if (!object) {
-      return new NextResponse("Not Found", {
-        status: 404,
-      });
-    }
-
-    const headers = new Headers();
-
-    headers.set(
-      "Content-Type",
-      object.httpMetadata?.contentType ||
-        getContentType(objectKey)
-    );
-
-    if (objectKey.startsWith("novels/")) {
-      headers.set(
-        "Cache-Control",
-        "public, max-age=300"
-      );
-    } else {
-      headers.set(
-        "Cache-Control",
-        "public, max-age=31536000, immutable"
-      );
-    }
-
-    return new NextResponse(object.body, {
-      status: 200,
-      headers,
-    });
+    // Chuyển hướng 301 vĩnh viễn trực tiếp sang CDN R2 img.yoruteam.com
+    // Worker chỉ tốn <0.1ms CPU để redirect, sau đó trình duyệt tự tải trực tiếp từ CDN
+    return Response.redirect(`${R2_PUBLIC_DOMAIN}/${objectKey}`, 301);
   } catch (error) {
-    console.error("R2 MEDIA ERROR:", error);
+    console.error("R2 MEDIA REDIRECT ERROR:", error);
 
-    return new NextResponse(
+    return new Response(
       "Không thể tải nội dung.",
       { status: 500 }
     );
   }
 }
+

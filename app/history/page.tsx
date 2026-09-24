@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
+import { toMediaUrl } from "@/lib/media";
 
 export const metadata: Metadata = {
   title: "Lịch sử đọc - Yoru Translation Group",
@@ -147,7 +148,7 @@ export default async function HistoryPage() {
                 <div className="h-28 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-200">
                   {item.manga.coverUrl ? (
                     <img
-                      src={item.manga.coverUrl}
+                      src={toMediaUrl(item.manga.coverUrl)}
                       alt={item.manga.title}
                       className="h-full w-full object-cover"
                     />

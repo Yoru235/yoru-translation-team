@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
+import { toMediaUrl } from "@/lib/media";
+import { getMangaUrl } from "@/lib/manga-url";
 
 export const metadata: Metadata = {
   title: "Bookmark — Yoru Translation Group",
@@ -93,13 +95,13 @@ export default async function BookmarkPage() {
               return (
                 <Link
                   key={bookmark.id}
-                  href={`/manga/${manga.id}`}
+                  href={getMangaUrl(manga)}
                   className="group overflow-hidden rounded-2xl border border-purple-100 bg-white shadow-md transition hover:-translate-y-2 hover:shadow-xl"
                 >
                   <div className="overflow-hidden bg-purple-100">
                     {manga.coverUrl ? (
                       <img
-                        src={manga.coverUrl}
+                        src={toMediaUrl(manga.coverUrl)}
                         alt={manga.title}
                         className="h-72 w-full object-cover transition duration-500 group-hover:scale-105"
                       />

@@ -6,7 +6,7 @@ import ScrollToTop from "@/components/ScrollToTop";
 
 export const metadata: Metadata = {
   title: "Yoru Translation Group",
-  description: "Manga · Manhwa · Manhua",
+  description: "Manga · Manhwa · Manhua · Novel",
   // Cấu hình cũ cho phép index (tạm comment lại):
   // robots: {
   //   index: true,

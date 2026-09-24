@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toMediaUrl } from "@/lib/media";
 
 type UploadType =
   | "cover"
@@ -71,15 +72,15 @@ export default function NewMangaPage() {
 
       throw new Error(
         text ||
-          "Server trả về lỗi khi upload ảnh."
+        "Server trả về lỗi khi upload ảnh."
       );
     }
-const data = (await response.json()) as any;
+    const data = (await response.json()) as any;
 
     if (!response.ok || !data.success) {
       throw new Error(
         data.error ||
-          "Không thể upload ảnh."
+        "Không thể upload ảnh."
       );
     }
 
@@ -217,12 +218,12 @@ const data = (await response.json()) as any;
 
         throw new Error(
           text ||
-            "Server trả về lỗi khi tạo truyện."
+          "Server trả về lỗi khi tạo truyện."
         );
       }
 
       const data =
-  (await response.json()) as any;
+        (await response.json()) as any;
 
       if (
         !response.ok ||
@@ -230,7 +231,7 @@ const data = (await response.json()) as any;
       ) {
         throw new Error(
           data.error ||
-            "Không thể thêm truyện."
+          "Không thể thêm truyện."
         );
       }
 
@@ -464,7 +465,7 @@ const data = (await response.json()) as any;
                 <div className="h-64 w-44 overflow-hidden rounded-xl border border-gray-700 bg-black">
 
                   <img
-                    src={coverUrl}
+                    src={toMediaUrl(coverUrl)}
                     alt="Cover preview"
                     className="h-full w-full object-cover"
                   />
@@ -522,7 +523,7 @@ const data = (await response.json()) as any;
                 <div className="max-w-md overflow-hidden rounded-xl border border-gray-700 bg-black">
 
                   <img
-                    src={creditUrl}
+                    src={toMediaUrl(creditUrl)}
                     alt="Credit preview"
                     className="max-h-80 w-full object-contain"
                   />

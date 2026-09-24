@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toMediaUrl } from "@/lib/media";
 
 type CommentUser = {
   id: string;
@@ -23,26 +24,26 @@ type Comment = {
 type CommentsProps = {
   mangaId?: string;
   chapterId?: string;
+  initialComments?: Comment[];
 };
 
 export default function Comments({
   mangaId,
   chapterId,
+  initialComments,
 }: CommentsProps) {
-  const [comments, setComments] =
-    useState<Comment[]>([]);
+  const [comments, setComments] = useState<Comment[]>(
+    initialComments || []
+  );
 
-  const [content, setContent] =
-    useState("");
+  const [content, setContent] = useState("");
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(initialComments === undefined);
 
-  const [posting, setPosting] =
-    useState(false);
+  const [posting, setPosting] = useState(false);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
+  const fetchedRef = useRef(false);
 
   async function loadComments() {
     try {
@@ -52,12 +53,12 @@ export default function Comments({
       const params =
         new URLSearchParams();
 
-            if (mangaId) {
+      if (mangaId) {
         params.set("mangaId", mangaId);
       }
 
       if (chapterId) {
-        params.set("scope", "reader");
+        params.set("chapterId", chapterId);
       } else {
         params.set("scope", "manga");
       }
@@ -70,7 +71,7 @@ export default function Comments({
         );
 
       const data =
-  (await response.json()) as any;
+        (await response.json()) as any;
 
       if (
         !response.ok ||
@@ -78,7 +79,7 @@ export default function Comments({
       ) {
         throw new Error(
           data.error ||
-            "Không thể tải bình luận."
+          "Không thể tải bình luận."
         );
       }
 
@@ -103,9 +104,19 @@ export default function Comments({
     }
   }
 
-   useEffect(() => {
+  useEffect(() => {
+    // Nếu SSR đã truyền danh sách comment, không cần fetch ngầm
+    if (initialComments !== undefined) {
+      setComments(initialComments);
+      setLoading(false);
+      return;
+    }
+
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+
     void loadComments();
-  }, [mangaId, chapterId]);
+  }, [mangaId, chapterId, initialComments]);
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>
@@ -136,7 +147,7 @@ export default function Comments({
         });
 
       const data =
-  (await response.json()) as any;
+        (await response.json()) as any;
 
       if (
         !response.ok ||
@@ -144,7 +155,7 @@ export default function Comments({
       ) {
         throw new Error(
           data.error ||
-            "Không thể đăng bình luận."
+          "Không thể đăng bình luận."
         );
       }
 
@@ -246,7 +257,7 @@ export default function Comments({
               <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-purple-600 to-pink-500 text-sm font-bold text-white">
                 {comment.user.avatar ? (
                   <img
-                    src={comment.user.avatar}
+                    src={toMediaUrl(comment.user.avatar)}
                     alt={
                       comment.user.username
                     }
@@ -267,14 +278,14 @@ export default function Comments({
 
                   {comment.user.role !==
                     "READER" && (
-                    <span className="rounded-full bg-pink-100 px-2 py-0.5 text-[10px] font-bold uppercase text-pink-600">
-                      {comment.user.role}
-                    </span>
-                  )}
+                      <span className="rounded-full bg-pink-100 px-2 py-0.5 text-[10px] font-bold uppercase text-pink-600">
+                        {comment.user.role}
+                      </span>
+                    )}
 
-                                   {chapterId && comment.chapter && (
+                  {chapterId && comment.chapter && (
                     <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-600">
-                       Chương {comment.chapter.chapter}
+                      Chương {comment.chapter.chapter}
                     </span>
                   )}
 

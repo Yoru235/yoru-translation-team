@@ -135,7 +135,7 @@ async function main() {
             text-anchor="end"
             class="line1"
           >
-            YORUTEAM.COM ĐỂ ỦNG HỘ NHÓM DỊCH
+            HÃY ỦNG HỘ NHÓM DỊCH TẠI YORUTEAM.COM
           </text>
 
           <text
