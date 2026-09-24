@@ -302,8 +302,8 @@ export default function HomePageClient({
   return (
     <main
       className={`min-h-screen font-sans ${darkMode
-          ? "bg-gradient-to-b from-[#12091a] via-[#1d0d27] to-[#28102a] text-white"
-          : "bg-gradient-to-b from-[#faf3ff] via-[#f8efff] to-[#fff0f8] text-purple-950"
+        ? "bg-gradient-to-b from-[#12091a] via-[#1d0d27] to-[#28102a] text-white"
+        : "bg-gradient-to-b from-[#faf3ff] via-[#f8efff] to-[#fff0f8] text-purple-950"
         }`}
     >
       {/* =====================================================
@@ -455,8 +455,8 @@ export default function HomePageClient({
       ===================================================== */}
       <nav
         className={`shadow-md sticky top-[70px] z-40 backdrop-blur-md ${darkMode
-            ? "bg-[#200d2e]/95 border-b border-purple-900/50"
-            : "bg-gradient-to-r from-[#551b78] via-[#8b258e] to-[#bd2688]"
+          ? "bg-[#200d2e]/95 border-b border-purple-900/50"
+          : "bg-gradient-to-r from-[#551b78] via-[#8b258e] to-[#bd2688]"
           }`}
       >
         <div className="mx-auto flex max-w-7xl gap-4 sm:gap-7 overflow-x-auto px-4 sm:px-6 py-3 scrollbar-none">
@@ -464,8 +464,8 @@ export default function HomePageClient({
             type="button"
             onClick={() => setActiveFilter("all")}
             className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-sm font-bold transition ${activeFilter === "all"
-                ? "bg-white/25 text-pink-200 shadow-sm"
-                : "text-white/90 hover:text-white hover:bg-white/10"
+              ? "bg-white/25 text-pink-200 shadow-sm"
+              : "text-white/90 hover:text-white hover:bg-white/10"
               }`}
           >
             Trang chủ
@@ -475,8 +475,8 @@ export default function HomePageClient({
             type="button"
             onClick={() => setActiveFilter("manga")}
             className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-sm font-bold transition ${activeFilter === "manga"
-                ? "bg-white/25 text-pink-200 shadow-sm"
-                : "text-white/90 hover:text-white hover:bg-white/10"
+              ? "bg-white/25 text-pink-200 shadow-sm"
+              : "text-white/90 hover:text-white hover:bg-white/10"
               }`}
           >
             Manga
@@ -486,8 +486,8 @@ export default function HomePageClient({
             type="button"
             onClick={() => setActiveFilter("manhwa")}
             className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-sm font-bold transition ${activeFilter === "manhwa"
-                ? "bg-white/25 text-pink-200 shadow-sm"
-                : "text-white/90 hover:text-white hover:bg-white/10"
+              ? "bg-white/25 text-pink-200 shadow-sm"
+              : "text-white/90 hover:text-white hover:bg-white/10"
               }`}
           >
             Manhwa
@@ -497,8 +497,8 @@ export default function HomePageClient({
             type="button"
             onClick={() => setActiveFilter("manhua")}
             className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-sm font-bold transition ${activeFilter === "manhua"
-                ? "bg-white/25 text-pink-200 shadow-sm"
-                : "text-white/90 hover:text-white hover:bg-white/10"
+              ? "bg-white/25 text-pink-200 shadow-sm"
+              : "text-white/90 hover:text-white hover:bg-white/10"
               }`}
           >
             Manhua
@@ -508,8 +508,8 @@ export default function HomePageClient({
             type="button"
             onClick={() => setActiveFilter("novel")}
             className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-sm font-bold transition ${activeFilter === "novel"
-                ? "bg-white/25 text-pink-200 shadow-sm"
-                : "text-white/90 hover:text-white hover:bg-white/10"
+              ? "bg-white/25 text-pink-200 shadow-sm"
+              : "text-white/90 hover:text-white hover:bg-white/10"
               }`}
           >
             Novel
@@ -519,8 +519,8 @@ export default function HomePageClient({
             type="button"
             onClick={() => setActiveFilter("ongoing")}
             className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-sm font-bold transition ${activeFilter === "ongoing"
-                ? "bg-white/25 text-pink-200 shadow-sm"
-                : "text-white/90 hover:text-white hover:bg-white/10"
+              ? "bg-white/25 text-pink-200 shadow-sm"
+              : "text-white/90 hover:text-white hover:bg-white/10"
               }`}
           >
             Đang tiến hành
@@ -530,8 +530,8 @@ export default function HomePageClient({
             type="button"
             onClick={() => setActiveFilter("completed")}
             className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-sm font-bold transition ${activeFilter === "completed"
-                ? "bg-white/25 text-pink-200 shadow-sm"
-                : "text-white/90 hover:text-white hover:bg-white/10"
+              ? "bg-white/25 text-pink-200 shadow-sm"
+              : "text-white/90 hover:text-white hover:bg-white/10"
               }`}
           >
             Đã hoàn thành
@@ -541,8 +541,8 @@ export default function HomePageClient({
             type="button"
             onClick={() => setActiveFilter("group")}
             className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-sm font-bold transition ${activeFilter === "group"
-                ? "bg-white/25 text-pink-200 shadow-sm"
-                : "text-white/90 hover:text-white hover:bg-white/10"
+              ? "bg-white/25 text-pink-200 shadow-sm"
+              : "text-white/90 hover:text-white hover:bg-white/10"
               }`}
           >
             Nhóm dịch
@@ -596,8 +596,8 @@ export default function HomePageClient({
                   >
                     <div
                       className={`relative h-[240px] w-[160px] sm:h-[290px] sm:w-[195px] overflow-hidden rounded-2xl bg-gray-900 shadow-2xl transition-all duration-700 ${isCenter
-                          ? "ring-4 ring-pink-400 shadow-pink-500/30"
-                          : "ring-1 ring-white/10"
+                        ? "ring-4 ring-pink-400 shadow-pink-500/30"
+                        : "ring-1 ring-white/10"
                         }`}
                     >
                       {coverSrc ? (
@@ -658,8 +658,8 @@ export default function HomePageClient({
                   type="button"
                   onClick={() => setFeaturedIndex(index)}
                   className={`h-2 rounded-full transition-all ${index === featuredIndex
-                      ? "w-6 bg-pink-400"
-                      : "w-2 bg-white/40 hover:bg-white/70"
+                    ? "w-6 bg-pink-400"
+                    : "w-2 bg-white/40 hover:bg-white/70"
                     }`}
                   aria-label={`Chuyển đến bìa ${index + 1}`}
                 />
@@ -701,8 +701,8 @@ export default function HomePageClient({
                     router.push(`/translation-group/${group.slug}`)
                   }
                   className={`group rounded-2xl border p-5 text-center transition hover:-translate-y-1 hover:shadow-lg ${darkMode
-                      ? "border-purple-900 bg-[#24152f]"
-                      : "border-purple-100 bg-white shadow-sm"
+                    ? "border-purple-900 bg-[#24152f]"
+                    : "border-purple-100 bg-white shadow-sm"
                     }`}
                 >
                   <div className="mx-auto h-20 w-20 overflow-hidden rounded-full bg-purple-100 ring-2 ring-purple-300/50">
@@ -721,8 +721,8 @@ export default function HomePageClient({
 
                   <h3
                     className={`mt-4 line-clamp-2 text-sm font-bold ${darkMode
-                        ? "text-white group-hover:text-pink-300"
-                        : "text-gray-900 group-hover:text-purple-600"
+                      ? "text-white group-hover:text-pink-300"
+                      : "text-gray-900 group-hover:text-purple-600"
                       }`}
                   >
                     {group.name}
@@ -759,8 +759,8 @@ export default function HomePageClient({
                 <a
                   href={getSeeMoreUrl()}
                   className={`hidden sm:inline-flex items-center gap-1 text-sm font-bold transition hover:gap-2 ${darkMode
-                      ? "text-pink-300 hover:text-pink-200"
-                      : "text-purple-700 hover:text-purple-900"
+                    ? "text-pink-300 hover:text-pink-200"
+                    : "text-purple-700 hover:text-purple-900"
                     }`}
                 >
                   Xem full →
@@ -791,8 +791,8 @@ export default function HomePageClient({
                           key={manga.id}
                           href={getMangaUrl(manga)}
                           className={`group flex flex-col overflow-hidden rounded-2xl border transition duration-300 hover:-translate-y-1.5 hover:shadow-xl ${darkMode
-                              ? "border-purple-900/60 bg-[#21122b] hover:border-pink-500/50"
-                              : "border-purple-100 bg-white shadow-sm hover:border-purple-300"
+                            ? "border-purple-900/60 bg-[#21122b] hover:border-pink-500/50"
+                            : "border-purple-100 bg-white shadow-sm hover:border-purple-300"
                             }`}
                         >
                           {/* ẢNH BÌA */}
@@ -818,8 +818,8 @@ export default function HomePageClient({
                             {/* STATUS BADGE */}
                             <span
                               className={`absolute top-2 right-2 rounded-lg px-2 py-0.5 text-[10px] font-bold text-white ${manga.status === "completed"
-                                  ? "bg-emerald-600/90"
-                                  : "bg-purple-600/90"
+                                ? "bg-emerald-600/90"
+                                : "bg-purple-600/90"
                                 }`}
                             >
                               {manga.status === "completed" ? "Full" : "Đang ra"}
@@ -920,8 +920,8 @@ export default function HomePageClient({
                         key={`hot-rank-${manga.id}`}
                         href={getMangaUrl(manga)}
                         className={`group flex items-center gap-3.5 rounded-2xl border p-2.5 transition duration-300 hover:-translate-y-0.5 hover:shadow-md ${darkMode
-                            ? "border-purple-900/60 bg-[#21122b]/80 hover:bg-[#2c173a] hover:border-pink-500/40"
-                            : "border-purple-100 bg-white hover:bg-purple-50/40 hover:border-purple-300"
+                          ? "border-purple-900/60 bg-[#21122b]/80 hover:bg-[#2c173a] hover:border-pink-500/40"
+                          : "border-purple-100 bg-white hover:bg-purple-50/40 hover:border-purple-300"
                           }`}
                       >
                         {/* HUY HIỆU THỨ HẠNG */}
@@ -1072,7 +1072,6 @@ export default function HomePageClient({
                   </button>
                 </div>
               </div>
-              <div>Quên mật khẩu?</div>
               <button
                 type="submit"
                 className="w-full rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-500 py-3 font-extrabold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"

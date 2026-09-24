@@ -58,7 +58,7 @@ export default function Comments({
       }
 
       if (chapterId) {
-        params.set("scope", "reader");
+        params.set("chapterId", chapterId);
       } else {
         params.set("scope", "manga");
       }

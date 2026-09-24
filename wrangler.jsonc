@@ -39,6 +39,13 @@
       "remote": true // tắt để thực hiện chỉnh sửa db ở local
     }
   ],
+  "kv_namespaces": [
+    {
+      "binding": "KV_AUTH",
+      "id": "5deae7c4eb474801a03af72839b1f0e0",
+      "remote": true
+    }
+  ],
   "observability": {
     "logs": {
       "enabled": true,
