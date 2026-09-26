@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth/session";
+import { notifyNewChapter } from "@/lib/discord";
 import { cookies } from "next/headers";
 import { createUnlockToken } from "@/lib/auth/unlock-token";
 import { env } from "cloudflare:workers";
@@ -329,6 +330,8 @@ export async function POST(request: Request) {
         select: {
           id: true,
           title: true,
+          type: true,
+          coverUrl: true,
           creditUrl: true,
         },
       });
@@ -546,6 +549,32 @@ export async function POST(request: Request) {
           },
         },
       });
+
+    // ================================
+    // GỬI THÔNG BÁO DISCORD WEBHOOK
+    // (Tự động gửi NEW_CHAPTER hoặc MANGA_END nếu isEnd = true)
+    // ================================
+    try {
+      const firstImage = validImages[0]?.imageUrl || manga.coverUrl;
+      await notifyNewChapter(
+        {
+          id: manga.id,
+          title: manga.title,
+          type: manga.type,
+          coverUrl: manga.coverUrl,
+        },
+        {
+          id: newChapter.id,
+          chapter: newChapter.chapter,
+          volume: newChapter.volume,
+          isH: newChapter.isH,
+          isEnd: newChapter.isEnd,
+          imageUrl: firstImage,
+        }
+      );
+    } catch (discordError) {
+      console.error("[Discord Webhook] Lỗi gửi thông báo chapter:", discordError);
+    }
 
     // ================================
     // TRẢ KẾT QUẢ
