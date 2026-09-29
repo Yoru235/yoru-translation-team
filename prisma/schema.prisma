@@ -140,6 +140,9 @@ model Chapter {
   mangaId      String
   volume       Int?
   chapter      Float
+  title        String?
+  publishedAt     DateTime? // <-- Thời gian xuất bản (null hoặc <= now() nghĩa là đã xuất bản)
+  discordNotified Boolean   @default(false) // <-- Đã gửi thông báo Discord chưa
   chapterType  String   @default("Manga")
   content      String?
   isH   Boolean @default(false)

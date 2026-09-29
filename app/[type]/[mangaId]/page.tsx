@@ -68,6 +68,12 @@ export default async function MangaPage({ params }: PageProps) {
       include: {
         translationGroup: true,
         chapters: {
+          where: {
+            OR: [
+              { publishedAt: null },
+              { publishedAt: { lte: new Date() } }
+            ]
+          },
           orderBy: {
             chapter: "asc",
           },

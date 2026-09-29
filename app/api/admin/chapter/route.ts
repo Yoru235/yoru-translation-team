@@ -170,6 +170,9 @@ export async function GET(request: Request) {
           mangaId: true,
           volume: true,
           chapter: true,
+          title: true,
+          publishedAt: true,
+          discordNotified: true,
           chapterType: true,
           isH: true,
           isEnd: true,
@@ -229,6 +232,8 @@ export async function POST(request: Request) {
       mangaId?: string;
       volume?: string | number | null;
       chapter?: string | number | null;
+      title?: string | null;
+      publishedAt?: string | null;
       images: unknown[];
       isH?: boolean;
       isEnd?: boolean;
@@ -240,6 +245,8 @@ export async function POST(request: Request) {
       mangaId,
       volume,
       chapter,
+      title,
+      publishedAt,
       images,
       isH,
       isEnd,
@@ -512,6 +519,10 @@ export async function POST(request: Request) {
       }
     );
 
+    const scheduleDate = publishedAt ? new Date(publishedAt) : null;
+    const isScheduled = scheduleDate && scheduleDate.getTime() > Date.now();
+    const finalPublishedAt = scheduleDate || new Date();
+
     const newChapter =
       await prisma.chapter.create({
         data: {
@@ -520,6 +531,9 @@ export async function POST(request: Request) {
           volume: volumeNumber,
 
           chapter: chapterNumber,
+          title: typeof title === "string" && title.trim() ? title.trim() : null,
+          publishedAt: finalPublishedAt,
+          discordNotified: !isScheduled,
           chapterType:
             typeof chapterType === "string" &&
               chapterType.trim()
@@ -554,26 +568,28 @@ export async function POST(request: Request) {
     // GỬI THÔNG BÁO DISCORD WEBHOOK
     // (Tự động gửi NEW_CHAPTER hoặc MANGA_END nếu isEnd = true)
     // ================================
-    try {
-      const firstImage = validImages[0]?.imageUrl || manga.coverUrl;
-      await notifyNewChapter(
-        {
-          id: manga.id,
-          title: manga.title,
-          type: manga.type,
-          coverUrl: manga.coverUrl,
-        },
-        {
-          id: newChapter.id,
-          chapter: newChapter.chapter,
-          volume: newChapter.volume,
-          isH: newChapter.isH,
-          isEnd: newChapter.isEnd,
-          imageUrl: firstImage,
-        }
-      );
-    } catch (discordError) {
-      console.error("[Discord Webhook] Lỗi gửi thông báo chapter:", discordError);
+    if (!isScheduled) {
+      try {
+        const firstImage = validImages[0]?.imageUrl || manga.coverUrl;
+        await notifyNewChapter(
+          {
+            id: manga.id,
+            title: manga.title,
+            type: manga.type,
+            coverUrl: manga.coverUrl,
+          },
+          {
+            id: newChapter.id,
+            chapter: newChapter.chapter,
+            volume: newChapter.volume,
+            isH: newChapter.isH,
+            isEnd: newChapter.isEnd,
+            imageUrl: firstImage,
+          }
+        );
+      } catch (discordError) {
+        console.error("[Discord Webhook] Lỗi gửi thông báo chapter:", discordError);
+      }
     }
 
     // ================================

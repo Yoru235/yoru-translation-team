@@ -6,6 +6,7 @@ import Link from "next/link";
 export type ChapterItem = {
   id: string;
   chapter: number;
+  title: string | null;
   volume: number | null;
   isH: boolean;
   isEnd: boolean;
@@ -95,8 +96,8 @@ export default function ChapterList({ chapters }: ChapterListProps) {
               <div>
                 <p className="font-bold text-gray-200">
                   {chapter.volume !== null
-                    ? `Vol. ${chapter.volume} — Chapter ${chapter.chapter}`
-                    : `Chapter ${chapter.chapter}`}
+                    ? `Vol. ${chapter.volume} — Chapter ${chapter.chapter}${chapter.title ? ` - ${chapter.title}` : ""}`
+                    : `Chapter ${chapter.chapter}${chapter.title ? ` - ${chapter.title}` : ""}`}
 
                   {chapter.isH && (
                     <span className="ml-2 text-purple-400">- H</span>

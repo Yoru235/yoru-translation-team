@@ -28,7 +28,7 @@ export default async function Home() {
           m.status, 
           m.views, 
           COALESCE(
-            (SELECT MAX(c.createdAt) FROM Chapter c WHERE c.mangaId = m.id),
+            (SELECT MAX(COALESCE(c.publishedAt, c.createdAt)) FROM Chapter c WHERE c.mangaId = m.id AND (c.publishedAt IS NULL OR datetime(c.publishedAt) <= datetime('now'))),
             m.updatedAt,
             m.createdAt
           ) AS updatedAt

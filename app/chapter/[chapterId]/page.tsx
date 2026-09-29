@@ -22,6 +22,8 @@ type ChapterWithDetails = {
   id: string;
   chapter: number;
   volume: number | null;
+  title: string | null;
+  publishedAt: string | null;
   mangaId: string;
   chapterType: string;
   content: string | null;
@@ -61,6 +63,8 @@ const getChapter = cache(async (chapterId: string): Promise<ChapterWithDetails |
           c."id",
           c."chapter",
           c."volume",
+          c."title",
+          c."publishedAt",
           c."mangaId",
           c."chapterType",
           c."content",
@@ -103,6 +107,8 @@ const getChapter = cache(async (chapterId: string): Promise<ChapterWithDetails |
     id: chapterResult.id,
     chapter: Number(chapterResult.chapter),
     volume: chapterResult.volume !== null ? Number(chapterResult.volume) : null,
+    title: chapterResult.title,
+    publishedAt: chapterResult.publishedAt,
     mangaId: chapterResult.mangaId,
     chapterType: chapterResult.chapterType || "Manga",
     content: chapterResult.content,
@@ -159,6 +165,12 @@ export default async function ChapterReaderPage({ params }: PageProps) {
     getCurrentUser(),
     getChapter(chapterId),
   ]);
+  // Nếu chưa đến giờ phát hành và người xem không phải admin/editor
+  const isOwnerOrAdmin = user && ["OWNER", "ADMIN", "EDITOR"].includes(user.role);
+  const isNotPublishedYet = chapter?.publishedAt && new Date(chapter?.publishedAt) > new Date();
+  if (isNotPublishedYet && !isOwnerOrAdmin) {
+    notFound(); // Hoặc trả về trang thông báo "Chapter chưa đến giờ phát hành"
+  }
 
   if (!user) {
     return (
@@ -234,13 +246,13 @@ export default async function ChapterReaderPage({ params }: PageProps) {
   const [previousChapter, nextChapter] = await Promise.all([
     env.yoru_database
       .prepare(
-        'SELECT "id", "chapter" FROM "Chapter" WHERE "mangaId" = ? AND "chapter" < ? ORDER BY "chapter" DESC LIMIT 1'
+        'SELECT "id", "chapter" FROM "Chapter" WHERE "mangaId" = ? AND "chapter" < ? AND ("publishedAt" IS NULL OR datetime("publishedAt") <= datetime(\'now\')) ORDER BY "chapter" DESC LIMIT 1'
       )
       .bind(chapter.mangaId, chapter.chapter)
       .first<{ id: string; chapter: number }>(),
     env.yoru_database
       .prepare(
-        'SELECT "id", "chapter" FROM "Chapter" WHERE "mangaId" = ? AND "chapter" > ? ORDER BY "chapter" ASC LIMIT 1'
+        'SELECT "id", "chapter" FROM "Chapter" WHERE "mangaId" = ? AND "chapter" > ? AND ("publishedAt" IS NULL OR datetime("publishedAt") <= datetime(\'now\')) ORDER BY "chapter" ASC LIMIT 1'
       )
       .bind(chapter.mangaId, chapter.chapter)
       .first<{ id: string; chapter: number }>(),
@@ -302,6 +314,24 @@ export default async function ChapterReaderPage({ params }: PageProps) {
         </div>
       </header>
 
+      {/* BANNER XEM TRƯỚC DÀNH CHO ADMIN */}
+      {isNotPublishedYet && isOwnerOrAdmin && chapter.publishedAt && (
+        <div className="border-b border-amber-500/40 bg-amber-500/15 px-4 py-3 text-center text-sm font-semibold text-amber-300">
+          🕒 <strong>[Chế độ xem trước của Quản trị viên]</strong>: Chapter này đang được hẹn giờ đăng vào lúc{" "}
+          <span className="underline">
+            {new Date(chapter.publishedAt).toLocaleString("vi-VN", {
+              timeZone: "Asia/Ho_Chi_Minh",
+              hour: "2-digit",
+              minute: "2-digit",
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            })}
+          </span>
+          . Độc giả thông thường hiện tại chưa thể xem chapter này.
+        </div>
+      )}
+
       {/* THÔNG TIN CHAPTER */}
       <section className="border-b border-gray-900 bg-[#080808]">
         <div className="mx-auto max-w-5xl px-4 py-6 text-center">
@@ -317,8 +347,8 @@ export default async function ChapterReaderPage({ params }: PageProps) {
 
           <p className="mt-2 text-lg font-semibold text-gray-400">
             {chapter.volume !== null
-              ? `Vol. ${chapter.volume} — Chapter ${chapter.chapter}${chapter.isH ? " - H" : ""}${chapter.isEnd ? " - END" : ""}`
-              : `Chapter ${chapter.chapter}${chapter.isH ? " - H" : ""}${chapter.isEnd ? " - END" : ""}`}
+              ? `Vol. ${chapter.volume} — Chapter ${chapter.chapter}${chapter.title ? ` - ${chapter.title}` : ""}${chapter.isH ? " - H" : ""}${chapter.isEnd ? " - END" : ""}`
+              : `Chapter ${chapter.chapter}${chapter.title ? ` - ${chapter.title}` : ""}${chapter.isH ? " - H" : ""}${chapter.isEnd ? " - END" : ""}`}
           </p>
         </div>
       </section>

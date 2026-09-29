@@ -6,7 +6,7 @@
     "nodejs_compat",
     "no_handle_cross_request_promise_resolution"
   ],
-  "main": "vinext/server/fetch-handler",
+  "main": "server/worker.ts",
   "assets": {
     "directory": "dist/client",
     "not_found_handling": "none",
@@ -58,5 +58,10 @@
       "head_sampling_rate": 1,
       "persist": true
     }
+  },
+  "triggers": {
+    "crons": [
+      "* * * * *"
+    ] // Tự động chạy mỗi 1 phút 1 lần
   }
 }
