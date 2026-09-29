@@ -336,6 +336,8 @@ export default function AdminPage() {
   const [selectedManga, setSelectedManga] = useState("");
   const [volume, setVolume] = useState("");
   const [chapter, setChapter] = useState("");
+  const [chapterTitle, setChapterTitle] = useState("");
+  const [releaseDate, setReleaseDate] = useState("");
 
   const [chapterType, setChapterType] = useState<
     "Manga" | "Manhwa" | "Manhua" | "Novel"
@@ -1464,19 +1466,14 @@ export default function AdminPage() {
 
         body: JSON.stringify({
           mangaId: selectedManga,
-
           volume: volumeNumber,
-
           chapter: chapterNumber,
-
+          title: chapterTitle.trim() || null,
+          publishedAt: releaseDate ? new Date(releaseDate).toISOString() : null,
           isH: isH,
-
           isEnd: isEnd,
-
           chapterType: chapterType,
-
           content: chapterType === "Novel" ? novelContent.trim() || null : null,
-
           images: uploadedImages,
         }),
       });
@@ -1521,6 +1518,8 @@ export default function AdminPage() {
 
       setVolume("");
       setChapter("");
+      setChapterTitle("");
+      setReleaseDate("");
       setZipFile(null);
       setIsH(false);
       setIsEnd(false);
@@ -2137,41 +2136,72 @@ export default function AdminPage() {
               </select>
             </div>
             {/* VOLUME */}
+            <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
 
-            <div className="mb-5">
-              <label className="mb-2 block font-bold text-purple-200">
-                📕 Volume
-                <span className="ml-2 text-sm font-normal text-purple-500">
-                  (không bắt buộc)
-                </span>
-              </label>
+              <div>
+                <label className="mb-2 block font-bold text-purple-200">
+                  📕 Volume
+                  <span className="ml-2 text-sm font-normal text-purple-500">
+                    (không bắt buộc)
+                  </span>
+                </label>
 
-              <input
-                value={volume}
-                onChange={(event) => setVolume(event.target.value)}
-                type="number"
-                min="1"
-                placeholder="Để trống nếu không dùng Volume"
-                className="w-full rounded-xl border border-purple-800 bg-[#18101f] px-4 py-3 text-white placeholder:text-purple-500 outline-none focus:ring-2 focus:ring-pink-400"
-              />
+                <input
+                  value={volume}
+                  onChange={(event) => setVolume(event.target.value)}
+                  type="number"
+                  min="1"
+                  placeholder="Để trống nếu không dùng Volume"
+                  className="w-full rounded-xl border border-purple-800 bg-[#18101f] px-4 py-3 text-white placeholder:text-purple-500 outline-none focus:ring-2 focus:ring-pink-400"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block font-bold text-purple-200">
+                  Lên lịch hẹn
+                  <span className="ml-2 text-sm font-normal text-purple-500">
+                    (Tùy chọn)
+                  </span>
+                </label>
+                <input
+                  value={releaseDate}
+                  onChange={(event) => setReleaseDate(event.target.value)}
+                  type="datetime-local"
+                  className="w-full rounded-xl border border-purple-800 bg-[#18101f] px-4 py-3 text-white outline-none focus:ring-2 focus:ring-pink-400 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:invert" />
+                <p className="mt-2 text-xs text-purple-500">
+                  Để trống nếu muốn đăng tải ngay
+                </p>
+              </div>
+
             </div>
-
             {/* CHAPTER */}
 
-            <div className="mb-5">
-              <label className="mb-2 block font-bold text-purple-200">
-                📖 Số chapter
-              </label>
+            <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* số chapter */}
+              <div>
+                <label className="mb-2 block font-bold text-purple-200">📖 Số chapter</label>
+                <input
+                  value={chapter}
+                  onChange={(e) => setChapter(e.target.value)}
+                  type="number"
+                  min="0"
+                  placeholder="ví dụ: 8"
+                  className="w-full rounded-xl border border-purple-800 bg-[#18101f] px-4 py-3 text-white placeholder:text-purple-500 outline-none focus:ring-2 focus:ring-pink-400"
+                />
+              </div>
 
-              <input
-                value={chapter}
-                onChange={(event) => setChapter(event.target.value)}
-                type="number"
-                min="0"
-                placeholder="Ví dụ: 8"
-                className="w-full rounded-xl border border-purple-800 bg-[#18101f] px-4 py-3 text-white placeholder:text-purple-500 outline-none focus:ring-2 focus:ring-pink-400"
-              />
+              {/* tiêu đề chương */}
+              <div>
+                <label className="mb-2 block font-bold text-purple-200">🏷️ Tiêu đề chương</label>
+                <input
+                  value={chapterTitle}
+                  onChange={(e) => setChapterTitle(e.target.value)}
+                  type="text"
+                  placeholder="ví dụ: Khởi đầu mới"
+                  className="w-full rounded-xl border border-purple-800 bg-[#18101f] px-4 py-3 text-white placeholder:text-purple-500 outline-none focus:ring-2 focus:ring-pink-400"
+                />
+              </div>
             </div>
+
             {/* NỘI DUNG NOVEL */}
 
             {chapterType === "Novel" && (
@@ -2535,9 +2565,22 @@ export default function AdminPage() {
 
                 <p className="mt-2 text-lg font-extrabold text-pink-400">
                   {volume
-                    ? `Vol. ${volume} — Chapter ${chapter}${isH ? " - H" : ""}${isEnd ? " - END" : ""}`
-                    : `Chapter ${chapter}${isH ? " - H" : ""}${isEnd ? " - END" : ""}`}
+                    ? `Vol. ${volume} — Chapter ${chapter} ${chapterTitle ? `- ${chapterTitle}` : ""}${isH ? " - H" : ""}${isEnd ? " - END" : ""}`
+                    : `Chapter ${chapter} ${chapterTitle ? `- ${chapterTitle}` : ""}${isH ? " - H" : ""}${isEnd ? " - END" : ""}`}
                 </p>
+
+                {releaseDate && (
+                  <p className="mt-2 text-xs font-semibold text-amber-300">
+                    🕒 Sẽ tự động đăng vào:{" "}
+                    {new Date(releaseDate).toLocaleString("vi-VN", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })} (Giờ Việt Nam)
+                  </p>
+                )}
               </div>
             )}
 

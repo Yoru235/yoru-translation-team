@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { notifyNewManga } from "@/lib/discord";
 
 /* =========================================================
    HÀM XỬ LÝ NGÀY
@@ -47,6 +48,9 @@ export async function GET(request: Request) {
               id: true,
               chapter: true,
               volume: true,
+              title: true,
+              publishedAt: true,
+              discordNotified: true,
               isLocked: true,
               passwordHint: true,
             },
@@ -277,6 +281,21 @@ console.log(
   "MANGA CREATED SUCCESS:",
   manga.id
 );
+
+    // Gửi thông báo truyện mới đến Discord Webhook
+    try {
+      await notifyNewManga({
+        id: manga.id,
+        title: manga.title,
+        type: manga.type,
+        description: manga.description,
+        coverUrl: manga.coverUrl,
+        genres: Array.isArray(manga.genres) ? (manga.genres as string[]) : [],
+      });
+    } catch (discordError) {
+      console.error("[Discord Webhook] Lỗi gửi thông báo tạo truyện:", discordError);
+    }
+
     return NextResponse.json(
       {
         success: true,

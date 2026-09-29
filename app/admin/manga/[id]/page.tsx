@@ -8,6 +8,9 @@ type Chapter = {
   id: string;
   chapter: number;
   volume: number | null;
+  title?: string | null;
+  publishedAt?: string | null;
+  discordNotified?: boolean;
   isLocked: boolean;
   passwordHint: string | null;
 };
@@ -52,135 +55,188 @@ export default function MangaAdminPage() {
   const [chapterPassword, setChapterPassword] = useState("");
   const [chapterPasswordHint, setChapterPasswordHint] = useState("");
   const [showChapterLockForm, setShowChapterLockForm] = useState(false);
-    const handleLockManga = async () => {
-  if (!manga) {
-    return;
-  }
+  const handleLockManga = async () => {
+    if (!manga) {
+      return;
+    }
 
-  if (manga.isLocked) {
-    const confirmed = window.confirm(
-      "Bạn có chắc muốn mở khóa truyện này không?"
-    );
+    if (manga.isLocked) {
+      const confirmed = window.confirm(
+        "Bạn có chắc muốn mở khóa truyện này không?"
+      );
 
-    if (!confirmed) return;
+      if (!confirmed) return;
+
+      try {
+        setIsLocking(true);
+
+        const response = await fetch(
+          "/api/admin/lock",
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              mangaId: manga.id,
+              isLocked: false,
+            }),
+          }
+        );
+
+        const data = (await response.json()) as any;
+
+        if (!response.ok || !data.success) {
+          throw new Error(
+            data.error || "Không thể mở khóa truyện."
+          );
+        }
+
+        setManga((current) =>
+          current
+            ? {
+              ...current,
+              isLocked: false,
+              passwordHint: null,
+            }
+            : current
+        );
+
+        setLockPassword("");
+        setLockPasswordHint("");
+        setShowLockForm(false);
+
+        window.alert("Đã mở khóa truyện.");
+      } catch (err) {
+        window.alert(
+          err instanceof Error
+            ? err.message
+            : "Không thể mở khóa truyện."
+        );
+      } finally {
+        setIsLocking(false);
+      }
+
+      return;
+    }
+
+    if (!lockPassword.trim()) {
+      window.alert("Vui lòng nhập mật khẩu.");
+      return;
+    }
 
     try {
       setIsLocking(true);
 
       const response = await fetch(
-  "/api/admin/lock",
-  {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      mangaId: manga.id,
-      isLocked: false,
-    }),
-  }
-);
-
+        "/api/admin/lock",
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            mangaId: manga.id,
+            isLocked: true,
+            password: lockPassword,
+            passwordHint: lockPasswordHint,
+          }),
+        });
       const data = (await response.json()) as any;
 
       if (!response.ok || !data.success) {
         throw new Error(
-          data.error || "Không thể mở khóa truyện."
+          data.error || "Không thể khóa truyện."
         );
       }
 
       setManga((current) =>
         current
           ? {
-              ...current,
-              isLocked: false,
-              passwordHint: null,
-            }
-          : current
-      );
-
-      setLockPassword("");
-      setLockPasswordHint("");
-      setShowLockForm(false);
-
-      window.alert("Đã mở khóa truyện.");
-    } catch (err) {
-      window.alert(
-        err instanceof Error
-          ? err.message
-          : "Không thể mở khóa truyện."
-      );
-    } finally {
-      setIsLocking(false);
-    }
-
-    return;
-  }
-
-  if (!lockPassword.trim()) {
-    window.alert("Vui lòng nhập mật khẩu.");
-    return;
-  }
-
-  try {
-    setIsLocking(true);
-
-    const response = await fetch(
-      "/api/admin/lock",
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          mangaId: manga.id,
-          isLocked: true,
-          password: lockPassword,
-          passwordHint: lockPasswordHint,
-        }),
-      });
-    const data = (await response.json()) as any;
-
-if (!response.ok || !data.success) {
-  throw new Error(
-    data.error || "Không thể khóa truyện."
-  );
-}
-
-      setManga((current) =>
-      current
-        ? {
             ...current,
             isLocked: true,
             passwordHint: lockPasswordHint || null,
           }
-        : current
-    );
+          : current
+      );
 
-    setLockPassword("");
-    setShowLockForm(false);
+      setLockPassword("");
+      setShowLockForm(false);
 
-    window.alert("Đã khóa truyện thành công.");
-  } catch (err) {
-    window.alert(
-      err instanceof Error
-        ? err.message
-        : "Không thể khóa truyện."
-    );
-  } finally {
-    setIsLocking(false);
-  }
-};
+      window.alert("Đã khóa truyện thành công.");
+    } catch (err) {
+      window.alert(
+        err instanceof Error
+          ? err.message
+          : "Không thể khóa truyện."
+      );
+    } finally {
+      setIsLocking(false);
+    }
+  };
 
-const handleLockChapter = async (chapter: Chapter) => {
-  if (!manga) return;
+  const handleLockChapter = async (chapter: Chapter) => {
+    if (!manga) return;
 
-  if (chapter.isLocked) {
-    const confirmed = window.confirm(
-      `Bạn có chắc muốn mở khóa Chapter ${chapter.chapter} không?`
-    );
+    if (chapter.isLocked) {
+      const confirmed = window.confirm(
+        `Bạn có chắc muốn mở khóa Chapter ${chapter.chapter} không?`
+      );
 
-    if (!confirmed) return;
+      if (!confirmed) return;
+
+      try {
+        const response = await fetch("/api/admin/lock", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            chapterId: chapter.id,
+            isLocked: false,
+          }),
+        });
+
+        const data = (await response.json()) as any;
+
+        if (!response.ok || !data.success) {
+          throw new Error(
+            data.error || "Không thể mở khóa Chapter."
+          );
+        }
+
+        setManga((current) =>
+          current
+            ? {
+              ...current,
+              chapters: current.chapters.map((item) =>
+                item.id === chapter.id
+                  ? {
+                    ...item,
+                    isLocked: false,
+                    passwordHint: null,
+                  }
+                  : item
+              ),
+            }
+            : current
+        );
+
+        window.alert("Đã mở khóa Chapter.");
+      } catch (error) {
+        window.alert(
+          error instanceof Error
+            ? error.message
+            : "Không thể mở khóa Chapter."
+        );
+      }
+
+      return;
+    }
+    if (!chapterPassword.trim()) {
+      setShowChapterLockForm(true);
+      return;
+    }
 
     try {
       const response = await fetch("/api/admin/lock", {
@@ -190,7 +246,9 @@ const handleLockChapter = async (chapter: Chapter) => {
         },
         body: JSON.stringify({
           chapterId: chapter.id,
-          isLocked: false,
+          isLocked: true,
+          password: chapterPassword,
+          passwordHint: chapterPasswordHint,
         }),
       });
 
@@ -198,96 +256,41 @@ const handleLockChapter = async (chapter: Chapter) => {
 
       if (!response.ok || !data.success) {
         throw new Error(
-          data.error || "Không thể mở khóa Chapter."
+          data.error || "Không thể khóa Chapter."
         );
       }
 
       setManga((current) =>
         current
           ? {
-              ...current,
-              chapters: current.chapters.map((item) =>
-                item.id === chapter.id
-                  ? {
-                      ...item,
-                      isLocked: false,
-                      passwordHint: null,
-                    }
-                  : item
-              ),
-            }
-          : current
-      );
-
-      window.alert("Đã mở khóa Chapter.");
-    } catch (error) {
-      window.alert(
-        error instanceof Error
-          ? error.message
-          : "Không thể mở khóa Chapter."
-      );
-    }
-
-    return;
-  }
-if (!chapterPassword.trim()) {
-  setShowChapterLockForm(true);
-  return;
-}
-
-try {
-  const response = await fetch("/api/admin/lock", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      chapterId: chapter.id,
-      isLocked: true,
-      password: chapterPassword,
-      passwordHint: chapterPasswordHint,
-    }),
-  });
-
-  const data = (await response.json()) as any;
-
-  if (!response.ok || !data.success) {
-    throw new Error(
-      data.error || "Không thể khóa Chapter."
-    );
-  }
-
-  setManga((current) =>
-    current
-      ? {
-          ...current,
-          chapters: current.chapters.map((item) =>
-            item.id === chapter.id
-              ? {
+            ...current,
+            chapters: current.chapters.map((item) =>
+              item.id === chapter.id
+                ? {
                   ...item,
                   isLocked: true,
                   passwordHint: chapterPasswordHint || null,
                 }
-              : item
-          ),
-        }
-      : current
-  );
+                : item
+            ),
+          }
+          : current
+      );
 
-  setChapterPassword("");
-  setChapterPasswordHint("");
-  setShowChapterLockForm(false);
+      setChapterPassword("");
+      setChapterPasswordHint("");
+      setShowChapterLockForm(false);
 
-  window.alert("Đã khóa Chapter.");
-} catch (error) {
-  window.alert(
-    error instanceof Error
-      ? error.message
-      : "Không thể khóa Chapter."
-  );
-}
- 
-};
+      window.alert("Đã khóa Chapter.");
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Không thể khóa Chapter."
+      );
+    }
+
+  };
   useEffect(() => {
     if (!mangaId) return;
 
@@ -306,34 +309,34 @@ try {
 
         const text = await response.text();
 
-console.log("MANGA API STATUS:", response.status);
-console.log("MANGA API RESPONSE:", text);
+        console.log("MANGA API STATUS:", response.status);
+        console.log("MANGA API RESPONSE:", text);
 
-if (!text) {
-  throw new Error(
-    "API manga trả về response rỗng."
-  );
-}
+        if (!text) {
+          throw new Error(
+            "API manga trả về response rỗng."
+          );
+        }
 
-let data: MangaResponse;
+        let data: MangaResponse;
 
-try {
-  data = JSON.parse(text) as MangaResponse;
-} catch (error) {
-  console.error(
-    "MANGA API KHÔNG TRẢ JSON:",
-    text
-  );
+        try {
+          data = JSON.parse(text) as MangaResponse;
+        } catch (error) {
+          console.error(
+            "MANGA API KHÔNG TRẢ JSON:",
+            text
+          );
 
-  throw new Error(
-    "API manga không trả về JSON hợp lệ."
-  );
-}
+          throw new Error(
+            "API manga không trả về JSON hợp lệ."
+          );
+        }
 
         if (!response.ok || !data.success || !data.manga) {
           throw new Error(
             data.error ||
-              "Không thể tải thông tin truyện."
+            "Không thể tải thông tin truyện."
           );
         }
 
@@ -469,13 +472,13 @@ try {
               )}
 
               {manga.author && (
-  <p className="mt-3 text-sm text-gray-400">
-    <span className="font-semibold text-gray-500">
-      Tác giả:
-    </span>{" "}
-    {manga.author}
-  </p>
-)}
+                <p className="mt-3 text-sm text-gray-400">
+                  <span className="font-semibold text-gray-500">
+                    Tác giả:
+                  </span>{" "}
+                  {manga.author}
+                </p>
+              )}
 
               <div className="mt-5 flex flex-wrap gap-2">
 
@@ -554,28 +557,27 @@ try {
                   📖 Thêm chapter
                 </a>
 
-<button
-  type="button"
-  onClick={() => {
-    if (manga.isLocked) {
-      void handleLockManga();
-    } else {
-      setShowLockForm((current) => !current);
-    }
-  }}
-  disabled={isLocking}
-  className={`rounded-xl border px-5 py-3 text-sm font-bold transition ${
-    manga.isLocked
-      ? "border-green-800 bg-green-950/30 text-green-400 hover:bg-green-900"
-      : "border-yellow-800 bg-yellow-950/30 text-yellow-400 hover:bg-yellow-900"
-  } disabled:cursor-not-allowed disabled:opacity-50`}
->
-  {isLocking
-    ? "⏳ Đang xử lý..."
-    : manga.isLocked
-      ? "🔓 Mở khóa truyện"
-      : "🔒 Khóa truyện"}
-</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (manga.isLocked) {
+                      void handleLockManga();
+                    } else {
+                      setShowLockForm((current) => !current);
+                    }
+                  }}
+                  disabled={isLocking}
+                  className={`rounded-xl border px-5 py-3 text-sm font-bold transition ${manga.isLocked
+                      ? "border-green-800 bg-green-950/30 text-green-400 hover:bg-green-900"
+                      : "border-yellow-800 bg-yellow-950/30 text-yellow-400 hover:bg-yellow-900"
+                    } disabled:cursor-not-allowed disabled:opacity-50`}
+                >
+                  {isLocking
+                    ? "⏳ Đang xử lý..."
+                    : manga.isLocked
+                      ? "🔓 Mở khóa truyện"
+                      : "🔒 Khóa truyện"}
+                </button>
                 <button
                   type="button"
                   className="rounded-xl border border-red-900 bg-red-950/20 px-5 py-3 text-sm font-bold text-red-400 transition hover:bg-red-950"
@@ -591,38 +593,38 @@ try {
 
         </section>
 
-{showLockForm && !manga.isLocked && (
-  <div className="mt-5 rounded-2xl border border-yellow-900 bg-[#111111] p-5">
-    <p className="font-bold text-yellow-400">
-      🔒 Khóa truyện
-    </p>
+        {showLockForm && !manga.isLocked && (
+          <div className="mt-5 rounded-2xl border border-yellow-900 bg-[#111111] p-5">
+            <p className="font-bold text-yellow-400">
+              🔒 Khóa truyện
+            </p>
 
-    <input
-      type="password"
-      value={lockPassword}
-      onChange={(e) => setLockPassword(e.target.value)}
-      placeholder="Nhập mật khẩu"
-      className="mt-4 w-full rounded-xl border border-gray-700 bg-black px-4 py-3 text-sm text-white outline-none focus:border-yellow-600"
-    />
+            <input
+              type="password"
+              value={lockPassword}
+              onChange={(e) => setLockPassword(e.target.value)}
+              placeholder="Nhập mật khẩu"
+              className="mt-4 w-full rounded-xl border border-gray-700 bg-black px-4 py-3 text-sm text-white outline-none focus:border-yellow-600"
+            />
 
-    <input
-      type="text"
-      value={lockPasswordHint}
-      onChange={(e) => setLockPasswordHint(e.target.value)}
-      placeholder="Gợi ý mật khẩu cho người đọc (không bắt buộc)"
-      className="mt-3 w-full rounded-xl border border-gray-700 bg-black px-4 py-3 text-sm text-white outline-none focus:border-yellow-600"
-    />
+            <input
+              type="text"
+              value={lockPasswordHint}
+              onChange={(e) => setLockPasswordHint(e.target.value)}
+              placeholder="Gợi ý mật khẩu cho người đọc (không bắt buộc)"
+              className="mt-3 w-full rounded-xl border border-gray-700 bg-black px-4 py-3 text-sm text-white outline-none focus:border-yellow-600"
+            />
 
-    <button
-      type="button"
-      onClick={() => void handleLockManga()}
-      disabled={isLocking}
-      className="mt-4 rounded-xl bg-yellow-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-yellow-600 disabled:opacity-50"
-    >
-      {isLocking ? "⏳ Đang khóa..." : "🔒 Xác nhận khóa"}
-    </button>
-  </div>
-)}
+            <button
+              type="button"
+              onClick={() => void handleLockManga()}
+              disabled={isLocking}
+              className="mt-4 rounded-xl bg-yellow-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-yellow-600 disabled:opacity-50"
+            >
+              {isLocking ? "⏳ Đang khóa..." : "🔒 Xác nhận khóa"}
+            </button>
+          </div>
+        )}
         {/* CHAPTER */}
 
         <section className="mt-8">
@@ -676,23 +678,36 @@ try {
                   >
 
                     <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-lg font-extrabold text-white">
+                          Chapter {chapter.chapter} {chapter.title ? `- ${chapter.title}` : ""}
+                        </p>
 
-                      <p className="text-lg font-extrabold text-white">
-                        Chapter {chapter.chapter}
-                      </p>
+                        {chapter.publishedAt && new Date(chapter.publishedAt) > new Date() && (
+                          <span className="rounded-lg border border-amber-500/40 bg-amber-500/15 px-2.5 py-1 text-xs font-bold text-amber-300">
+                            🕒 Hẹn đăng: {new Date(chapter.publishedAt).toLocaleString("vi-VN", {
+                              timeZone: "Asia/Ho_Chi_Minh",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                            })}
+                          </span>
+                        )}
+                      </div>
 
-{chapter.isLocked && (
-  <p className="mt-1 text-xs font-bold text-yellow-400">
-    🔒 Chapter đang khóa
-  </p>
-)}
+                      {chapter.isLocked && (
+                        <p className="mt-1 text-xs font-bold text-yellow-400">
+                          🔒 Chapter đang khóa
+                        </p>
+                      )}
 
                       {chapter.volume !== null && (
                         <p className="mt-1 text-sm text-gray-500">
                           Volume {chapter.volume}
                         </p>
                       )}
-
                     </div>
 
                     <div className="flex flex-wrap gap-2">
@@ -710,116 +725,115 @@ try {
                       >
                         ✏️ Sửa
                       </a>
-<button
-  type="button"
- onClick={() => {
-  void handleLockChapter(chapter);
-}}
-  className={`rounded-xl border px-4 py-2 text-sm font-bold transition ${
-    chapter.isLocked
-      ? "border-green-800 bg-green-950/30 text-green-400 hover:bg-green-900"
-      : "border-yellow-800 bg-yellow-950/30 text-yellow-400 hover:bg-yellow-900"
-  }`}
->
-  {chapter.isLocked
-    ? "🔓 Mở khóa"
-    : "🔒 Khóa"}
-</button>
-{showChapterLockForm && !chapter.isLocked && (
-  <div className="mt-3 w-full rounded-xl border border-yellow-900 bg-[#111111] p-4">
-    <p className="font-bold text-yellow-400">
-      🔒 Khóa Chapter {chapter.chapter}
-    </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void handleLockChapter(chapter);
+                        }}
+                        className={`rounded-xl border px-4 py-2 text-sm font-bold transition ${chapter.isLocked
+                            ? "border-green-800 bg-green-950/30 text-green-400 hover:bg-green-900"
+                            : "border-yellow-800 bg-yellow-950/30 text-yellow-400 hover:bg-yellow-900"
+                          }`}
+                      >
+                        {chapter.isLocked
+                          ? "🔓 Mở khóa"
+                          : "🔒 Khóa"}
+                      </button>
+                      {showChapterLockForm && !chapter.isLocked && (
+                        <div className="mt-3 w-full rounded-xl border border-yellow-900 bg-[#111111] p-4">
+                          <p className="font-bold text-yellow-400">
+                            🔒 Khóa Chapter {chapter.chapter}
+                          </p>
 
-    <input
-      type="password"
-      value={chapterPassword}
-      onChange={(e) => setChapterPassword(e.target.value)}
-      placeholder="Nhập mật khẩu"
-      className="mt-3 w-full rounded-xl border border-gray-700 bg-black px-4 py-3 text-sm text-white outline-none focus:border-yellow-600"
-    />
+                          <input
+                            type="password"
+                            value={chapterPassword}
+                            onChange={(e) => setChapterPassword(e.target.value)}
+                            placeholder="Nhập mật khẩu"
+                            className="mt-3 w-full rounded-xl border border-gray-700 bg-black px-4 py-3 text-sm text-white outline-none focus:border-yellow-600"
+                          />
 
-    <input
-      type="text"
-      value={chapterPasswordHint}
-      onChange={(e) => setChapterPasswordHint(e.target.value)}
-      placeholder="Gợi ý mật khẩu (không bắt buộc)"
-      className="mt-3 w-full rounded-xl border border-gray-700 bg-black px-4 py-3 text-sm text-white outline-none focus:border-yellow-600"
-    />
+                          <input
+                            type="text"
+                            value={chapterPasswordHint}
+                            onChange={(e) => setChapterPasswordHint(e.target.value)}
+                            placeholder="Gợi ý mật khẩu (không bắt buộc)"
+                            className="mt-3 w-full rounded-xl border border-gray-700 bg-black px-4 py-3 text-sm text-white outline-none focus:border-yellow-600"
+                          />
 
-    <button
-      type="button"
-      onClick={() => void handleLockChapter(chapter)}
-      className="mt-3 rounded-xl bg-yellow-700 px-4 py-2 text-sm font-bold text-white"
-    >
-      🔒 Xác nhận khóa
-    </button>
-  </div>
-)}
-  <button
-  type="button"
-  onClick={async () => {
-    const confirmed = window.confirm(
-      `Bạn có chắc muốn xóa Chapter ${chapter.chapter} không?`
-    );
+                          <button
+                            type="button"
+                            onClick={() => void handleLockChapter(chapter)}
+                            className="mt-3 rounded-xl bg-yellow-700 px-4 py-2 text-sm font-bold text-white"
+                          >
+                            🔒 Xác nhận khóa
+                          </button>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const confirmed = window.confirm(
+                            `Bạn có chắc muốn xóa Chapter ${chapter.chapter} không?`
+                          );
 
-    if (!confirmed) return;
+                          if (!confirmed) return;
 
-    try {
-      const response = await fetch(
-  `/api/admin/chapter?id=${chapter.id}`,
-  {
-    method: "DELETE",
-  }
-);
+                          try {
+                            const response = await fetch(
+                              `/api/admin/chapter?id=${chapter.id}`,
+                              {
+                                method: "DELETE",
+                              }
+                            );
 
-const text = await response.text();
+                            const text = await response.text();
 
-console.log("DELETE CHAPTER STATUS:", response.status);
-console.log("DELETE CHAPTER RESPONSE:", text);
+                            console.log("DELETE CHAPTER STATUS:", response.status);
+                            console.log("DELETE CHAPTER RESPONSE:", text);
 
-let data: {
-  success?: boolean;
-  message?: string;
-  error?: string;
-} = {};
+                            let data: {
+                              success?: boolean;
+                              message?: string;
+                              error?: string;
+                            } = {};
 
-if (text.trim()) {
-  try {
-    data = JSON.parse(text);
-  } catch {
-    throw new Error(
-      "API xóa chapter trả về dữ liệu không hợp lệ."
-    );
-  }
-}
+                            if (text.trim()) {
+                              try {
+                                data = JSON.parse(text);
+                              } catch {
+                                throw new Error(
+                                  "API xóa chapter trả về dữ liệu không hợp lệ."
+                                );
+                              }
+                            }
 
-if (!response.ok || !data.success) {
-  throw new Error(
-    data.error || "Không thể xóa chapter."
-  );
-}
+                            if (!response.ok || !data.success) {
+                              throw new Error(
+                                data.error || "Không thể xóa chapter."
+                              );
+                            }
 
-      window.alert("Đã xóa chapter thành công.");
+                            window.alert("Đã xóa chapter thành công.");
 
-      window.location.reload();
-    } catch (error) {
-      console.error(
-        "DELETE CHAPTER ERROR:",
-        error
-      );
+                            window.location.reload();
+                          } catch (error) {
+                            console.error(
+                              "DELETE CHAPTER ERROR:",
+                              error
+                            );
 
-      window.alert(
-        error instanceof Error
-          ? error.message
-          : "Không thể xóa chapter."
-      );
-    }
-  }}
-  className="rounded-xl border border-red-900 bg-red-950/20 px-4 py-2 text-sm font-bold text-red-400 transition hover:bg-red-950"
->
-  🗑️ Xóa
-</button>
+                            window.alert(
+                              error instanceof Error
+                                ? error.message
+                                : "Không thể xóa chapter."
+                            );
+                          }
+                        }}
+                        className="rounded-xl border border-red-900 bg-red-950/20 px-4 py-2 text-sm font-bold text-red-400 transition hover:bg-red-950"
+                      >
+                        🗑️ Xóa
+                      </button>
 
                     </div>
 
