@@ -5,6 +5,11 @@ import { env } from "cloudflare:workers";
 // Biến lưu trữ Singleton Instance trong V8 Isolate
 let clientInstance: PrismaClient | null = null;
 
+export function createPrismaClient(d1Database: any): PrismaClient {
+  const adapter = new PrismaD1(d1Database);
+  return new PrismaClient({ adapter });
+}
+
 function getPrisma(): PrismaClient {
   // Nếu đã có instance trong V8 isolate này, dùng lại instance cũ
   if (clientInstance) {
