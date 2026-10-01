@@ -1,6 +1,6 @@
 import handler from "vinext/server/fetch-handler";
-import { prisma } from "@/lib/prisma";
-import { notifyNewChapter } from "@/lib/discord";
+import { createPrismaClient, prisma } from "@/lib/prisma";
+import { sendDiscordNotification } from "@/lib/discord";
 
 export default {
   // 1. Chuyển toàn bộ HTTP request cho Next.js / Vinext xử lý
@@ -13,10 +13,13 @@ export default {
     ctx.waitUntil(
       (async () => {
         try {
+          const db = env?.yoru_database
+            ? createPrismaClient(env.yoru_database)
+            : prisma;
           const now = new Date();
 
           // Tìm các chapter đã đến giờ hẹn nhưng chưa bắn Discord
-          const pendingChapters = await prisma.chapter.findMany({
+          const pendingChapters = await db.chapter.findMany({
             where: {
               publishedAt: { lte: now },
               discordNotified: false,
@@ -32,21 +35,25 @@ export default {
               const firstImage =
                 chapter.images[0]?.imageUrl || chapter.manga.coverUrl;
 
-              await notifyNewChapter(
+              await sendDiscordNotification(
+                { DISCORD_WEBHOOK_URL: env?.DISCORD_WEBHOOK_URL },
                 {
-                  id: chapter.manga.id,
-                  title: chapter.manga.title,
-                  type: chapter.manga.type,
-                  coverUrl: chapter.manga.coverUrl,
-                },
-                {
-                  id: chapter.id,
-                  chapter: chapter.chapter,
-                  volume: chapter.volume,
-                  title: chapter.title || undefined,
-                  isH: chapter.isH,
-                  isEnd: chapter.isEnd,
-                  imageUrl: firstImage,
+                  type: chapter.isEnd ? "MANGA_END" : "NEW_CHAPTER",
+                  manga: {
+                    id: chapter.manga.id,
+                    title: chapter.manga.title,
+                    type: chapter.manga.type,
+                    coverUrl: chapter.manga.coverUrl,
+                  },
+                  chapter: {
+                    id: chapter.id,
+                    chapter: chapter.chapter,
+                    volume: chapter.volume,
+                    title: chapter.title || undefined,
+                    isH: chapter.isH,
+                    isEnd: chapter.isEnd,
+                    imageUrl: firstImage,
+                  },
                 }
               );
             } catch (discordErr) {
@@ -54,13 +61,17 @@ export default {
             }
 
             // Đánh dấu đã thông báo
-            await prisma.chapter.update({
+            await db.chapter.update({
               where: { id: chapter.id },
               data: { discordNotified: true },
             });
           }
-        } catch (error) {
-          console.error("[Cron Scheduled Error]:", error);
+        } catch (error: any) {
+          console.error("[Cron Scheduled Error]:", error?.message || error, {
+            code: error?.code,
+            meta: error?.meta,
+            stack: error?.stack,
+          });
         }
       })()
     );

@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 
 const PASSWORD_HINT =
-  "Biệt danh trong dis của Yoru **** (viết lại chữ Yoru+bấm cách+****";
+  "Tên website bạn đang đọc (Gợi ý: yo******.com)";
 
 interface UnlockModalProps {
   onUnlocked?: () => void;

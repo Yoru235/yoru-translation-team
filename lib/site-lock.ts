@@ -2,20 +2,29 @@ import crypto from "crypto";
 
 export const SITE_LOCK_COOKIE = "yoru_site_unlocked";
 
-function getSecret() {
-  const secret = process.env.SITE_LOCK_SECRET;
-
-  if (!secret) {
-    throw new Error("SITE_LOCK_SECRET chưa được cấu hình.");
+function getEnvValue(key: string): string | undefined {
+  if (typeof process !== "undefined" && process.env?.[key]) {
+    return process.env[key];
   }
+  return undefined;
+}
+
+function getSecret() {
+  const secret =
+    getEnvValue("SITE_LOCK_SECRET") ||
+    getEnvValue("JWT_SECRET") ||
+    "yoru-default-site-lock-secret-key";
 
   return secret;
 }
 
 export function createSiteLockToken() {
+  const secret = getSecret();
+  const password = getEnvValue("SITE_PASSWORD") || "";
+
   return crypto
-    .createHmac("sha256", getSecret())
-    .update("yoru-site-unlocked")
+    .createHmac("sha256", secret)
+    .update(`yoru-site-unlocked:${password}`)
     .digest("hex");
 }
 
