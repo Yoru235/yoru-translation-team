@@ -35,25 +35,6 @@ export async function POST(
       "UPLOAD USER:",
       user
     );
-
-    if (
-      !user ||
-      !["OWNER", "ADMIN", "EDITOR"].includes(
-        user.role
-      )
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Bạn không có quyền upload ảnh.",
-        },
-        {
-          status: 403,
-        }
-      );
-    }
-
     // ================================
     // LẤY FORM DATA
     // ================================
@@ -66,6 +47,17 @@ export async function POST(
 
     const uploadType =
       formData.get("type");
+      if (!user) {
+  return NextResponse.json(
+    {
+      success: false,
+      error: "Bạn chưa đăng nhập.",
+    },
+    {
+      status: 401,
+    }
+  );
+}
 
     // ================================
     // XÁC ĐỊNH LOẠI UPLOAD
@@ -77,6 +69,23 @@ export async function POST(
       uploadType === "avatar"
         ? uploadType
         : "chapter";
+        if (
+  type !== "avatar" &&
+  !["OWNER", "ADMIN", "EDITOR"].includes(
+    user.role
+  )
+) {
+  return NextResponse.json(
+    {
+      success: false,
+      error:
+        "Bạn không có quyền upload ảnh này.",
+    },
+    {
+      status: 403,
+    }
+  );
+}
 
     // ================================
     // KIỂM TRA FILE
