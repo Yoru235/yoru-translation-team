@@ -11,6 +11,7 @@ import { env } from "cloudflare:workers";
 import Comments from "@/components/Comments";
 import ChapterLockGate from "@/components/ChapterLockGate";
 import ReadingTracker from "@/components/ReadingTracker";
+import ChapterReaderNav, { NavChapterItem } from "@/components/ChapterReaderNav";
 
 type PageProps = {
   params: Promise<{
@@ -242,21 +243,42 @@ export default async function ChapterReaderPage({ params }: PageProps) {
     );
   }
 
-  // 4. Lấy Prev / Next chapter trực tiếp qua 2 query D1 SQL thuần siêu nhẹ
-  const [previousChapter, nextChapter] = await Promise.all([
-    env.yoru_database
+  // 4. Lấy toàn bộ chapter và Prev / Next chapter trực tiếp qua 1 query D1 SQL thuần siêu nhẹ
+  const chaptersQuery = isOwnerOrAdmin
+    ? env.yoru_database
       .prepare(
-        'SELECT "id", "chapter" FROM "Chapter" WHERE "mangaId" = ? AND "chapter" < ? AND ("publishedAt" IS NULL OR datetime("publishedAt") <= datetime(\'now\')) ORDER BY "chapter" DESC LIMIT 1'
+        'SELECT "id", "chapter", "volume", "title", "isH", "isEnd", "isLocked" FROM "Chapter" WHERE "mangaId" = ? ORDER BY "chapter" ASC'
       )
-      .bind(chapter.mangaId, chapter.chapter)
-      .first<{ id: string; chapter: number }>(),
-    env.yoru_database
+      .bind(chapter.mangaId)
+    : env.yoru_database
       .prepare(
-        'SELECT "id", "chapter" FROM "Chapter" WHERE "mangaId" = ? AND "chapter" > ? AND ("publishedAt" IS NULL OR datetime("publishedAt") <= datetime(\'now\')) ORDER BY "chapter" ASC LIMIT 1'
+        'SELECT "id", "chapter", "volume", "title", "isH", "isEnd", "isLocked" FROM "Chapter" WHERE "mangaId" = ? AND ("publishedAt" IS NULL OR datetime("publishedAt") <= datetime(\'now\')) ORDER BY "chapter" ASC'
       )
-      .bind(chapter.mangaId, chapter.chapter)
-      .first<{ id: string; chapter: number }>(),
-  ]);
+      .bind(chapter.mangaId);
+
+  const chaptersResult = await chaptersQuery.all<{
+    id: string;
+    chapter: number;
+    volume: number | null;
+    title: string | null;
+    isH: number | boolean;
+    isEnd: number | boolean;
+    isLocked: number | boolean;
+  }>();
+
+  const allChapters: NavChapterItem[] = (chaptersResult?.results || []).map((c) => ({
+    id: c.id,
+    chapter: Number(c.chapter),
+    volume: c.volume !== null ? Number(c.volume) : null,
+    title: c.title,
+    isH: Boolean(c.isH),
+    isEnd: Boolean(c.isEnd),
+    isLocked: Boolean(c.isLocked),
+  }));
+
+  const currentIdx = allChapters.findIndex((c) => c.id === chapter.id);
+  const previousChapter = currentIdx > 0 ? allChapters[currentIdx - 1] : null;
+  const nextChapter = currentIdx >= 0 && currentIdx < allChapters.length - 1 ? allChapters[currentIdx + 1] : null;
 
   // 5. Đọc nội dung Novel từ Cloudflare R2 trong SSR nếu có
   let novelContent = chapter.content || "";
@@ -353,43 +375,16 @@ export default async function ChapterReaderPage({ params }: PageProps) {
         </div>
       </section>
 
-      {/* THANH ĐIỀU HƯỚNG */}
-      <div className="sticky top-16 z-40 border-b border-gray-900 bg-black/95 py-3 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-center gap-3 px-4">
-          {previousChapter ? (
-            <Link
-              href={`/chapter/${previousChapter.id}`}
-              className="rounded-xl bg-[#171717] px-4 py-2 text-sm font-bold text-gray-200 transition hover:bg-purple-900 hover:text-white"
-            >
-              ← Chap trước
-            </Link>
-          ) : (
-            <span className="cursor-not-allowed rounded-xl bg-[#0d0d0d] px-4 py-2 text-sm font-bold text-gray-700">
-              ← Chap trước
-            </span>
-          )}
-
-          <Link
-            href={getMangaUrl({ id: chapter.mangaId, type: chapter.manga.type })}
-            className="rounded-xl bg-gradient-to-r from-purple-700 to-pink-600 px-5 py-2 text-sm font-bold text-white transition hover:opacity-90"
-          >
-            Danh sách
-          </Link>
-
-          {nextChapter ? (
-            <Link
-              href={`/chapter/${nextChapter.id}`}
-              className="rounded-xl bg-[#171717] px-4 py-2 text-sm font-bold text-gray-200 transition hover:bg-purple-900 hover:text-white"
-            >
-              Chap sau →
-            </Link>
-          ) : (
-            <span className="cursor-not-allowed rounded-xl bg-[#0d0d0d] px-4 py-2 text-sm font-bold text-gray-700">
-              Chap sau →
-            </span>
-          )}
-        </div>
-      </div>
+      {/* THANH ĐIỀU HƯỚNG VÀ MỤC LỤC TRƯỢT (DRAWER) */}
+      <ChapterReaderNav
+        currentChapterId={chapter.id}
+        mangaId={chapter.mangaId}
+        mangaTitle={chapter.manga.title}
+        mangaType={chapter.manga.type}
+        previousChapter={previousChapter}
+        nextChapter={nextChapter}
+        chapters={allChapters}
+      />
 
       {/* NỘI DUNG CHAPTER */}
       <section className="bg-black">
